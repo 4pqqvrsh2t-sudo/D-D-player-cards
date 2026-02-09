@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>D&D Player Cards</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <p class="eyebrow">Campaign Companion</p>
+      <h1>D&D Player Cards</h1>
+      <p>
+        Click a card to slide into a detailed view with race traits, core stats,
+        reminders, and spell progression.
+      </p>
+    </header>
+
+    <main>
+      <section class="card-grid" id="cardGrid" aria-label="Player cards"></section>
+
+      <section id="detailPanel" class="detail-panel" aria-live="polite" hidden>
+        <button id="closeDetail" class="close-btn" type="button">← Back to cards</button>
+        <article id="detailContent"></article>
+      </section>
+    </main>
+
+    <template id="cardTemplate">
+      <article class="player-card" tabindex="0" role="button">
+        <div class="card-top">
+          <h2 class="character-name"></h2>
+          <p class="character-meta"></p>
+        </div>
+        <p class="card-hook"></p>
+      </article>
+    </template>
+
+    <script src="app.js"></script>
+  </body>
+</html>
