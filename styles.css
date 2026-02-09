@@ -249,8 +249,22 @@ main {
 .inventory-layout-panel.standalone {
   margin-top: 1rem;
   display: grid;
-  grid-template-columns: 200px 1fr;
+  grid-template-columns: 220px 1fr;
   gap: 1rem;
+}
+
+.inventory-section {
+  background: #1a2034;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 0.8rem;
+}
+
+.section-limit {
+  margin-left: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-weight: 500;
 }
 
 .armor-grid {
@@ -286,9 +300,16 @@ main {
 
 .inventory-empty {
   background: rgba(255, 255, 255, 0.04);
-  border-style: dashed;
+  border-style: solid;
   border-color: rgba(255, 255, 255, 0.18);
   box-shadow: none;
+}
+
+.inventory-empty:hover,
+.inventory-empty:focus-within {
+  box-shadow: none;
+  transform: none;
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 .armor-item {

@@ -14,16 +14,22 @@
         <p id="inventoryMeta"></p>
       </header>
 
-      <section class="panel inventory-layout-panel standalone">
-        <div class="armor-column">
-          <h3>Armor</h3>
+      <section class="inventory-layout-panel standalone" aria-label="Armor and inventory">
+        <article class="inventory-section armor-column">
+          <h3>
+            Armor
+            <span id="armorLimit" class="section-limit" aria-live="polite"></span>
+          </h3>
           <div id="armorGrid" class="armor-grid"></div>
-        </div>
+        </article>
 
-        <div class="inventory-column">
-          <h3>Inventory</h3>
+        <article class="inventory-section inventory-column">
+          <h3>
+            Inventory
+            <span id="inventoryLimit" class="section-limit" aria-live="polite"></span>
+          </h3>
           <div class="inventory-grid inventory-grid-large" id="inventoryGrid"></div>
-        </div>
+        </article>
       </section>
     </main>
 

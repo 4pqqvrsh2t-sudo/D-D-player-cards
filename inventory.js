@@ -75,6 +75,9 @@ const player = players[playerIndex] ?? players[0];
 document.querySelector("#inventoryName").textContent = `${player.name} — Inventory`;
 document.querySelector("#inventoryMeta").textContent = player.classLevel;
 
+const armorLimit = document.querySelector("#armorLimit");
+const inventoryLimit = document.querySelector("#inventoryLimit");
+
 const armorGrid = document.querySelector("#armorGrid");
 armorGrid.innerHTML = player.armor
   .map(
@@ -85,9 +88,13 @@ armorGrid.innerHTML = player.armor
   )
   .join("");
 
+const ARMOR_SLOT_LIMIT = 5;
 const INVENTORY_COLUMNS = 5;
 const INVENTORY_ROWS = 7;
 const totalSlots = INVENTORY_COLUMNS * INVENTORY_ROWS;
+
+armorLimit.textContent = `(${Math.min(player.armor.length, ARMOR_SLOT_LIMIT)}/${ARMOR_SLOT_LIMIT})`;
+inventoryLimit.textContent = `(${player.inventory.length}/${totalSlots})`;
 const slots = [...player.inventory];
 while (slots.length < totalSlots) {
   slots.push(null);
