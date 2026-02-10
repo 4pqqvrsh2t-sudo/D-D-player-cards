@@ -143,9 +143,10 @@ main {
   color: var(--text);
   border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 999px;
-  padding: 0.45rem 0.85rem;
+  padding: 0.55rem 0.95rem;
   cursor: pointer;
   margin-bottom: 1rem;
+  min-height: 44px;
 }
 
 .detail-header h2 {
@@ -156,6 +157,14 @@ main {
 .detail-header p {
   margin: 0.4rem 0 1rem;
   color: var(--accent);
+}
+
+.detail-utilities {
+  margin: 0.25rem 0 0.9rem;
+  display: flex;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .detail-grid {
@@ -188,32 +197,79 @@ main {
 }
 
 .utility-tab {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: var(--text);
   background: rgba(255, 255, 255, 0.06);
   border-radius: 999px;
-  padding: 0.45rem 1.1rem;
+  padding: 0.55rem 1.1rem;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   text-decoration: none;
   margin-bottom: 0.75rem;
+  min-height: 44px;
 }
 
-.utility-tab:hover {
+.utility-tab:hover,
+.utility-tab:focus-visible {
   border-color: rgba(242, 215, 160, 0.7);
   box-shadow: 0 0 10px rgba(217, 181, 113, 0.3);
   background: rgba(194, 155, 78, 0.14);
+  outline: none;
 }
 
 .inventory-link {
   width: fit-content;
+  margin-bottom: 0;
 }
 
-.inventory-jump-panel {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
+.spell-page {
+  max-width: 1200px;
+}
+
+.spell-page-panel {
+  margin-top: 1rem;
+}
+
+.rotate-lock {
+  display: none;
+}
+
+.lock-spell-view .spell-page {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.lock-spell-view .rotate-lock {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(8, 10, 18, 0.96);
+  z-index: 999;
+}
+
+.rotate-lock-card {
+  background: #1a2034;
+  border: 1px solid rgba(242, 215, 160, 0.45);
+  border-radius: 12px;
+  max-width: 420px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.rotate-lock-card h2 {
+  margin: 0;
+  color: var(--accent);
+  font-size: 1.1rem;
+}
+
+.rotate-lock-card p {
+  margin: 0.65rem 0 0;
+  color: var(--muted);
 }
 
 .limits {
@@ -249,8 +305,26 @@ main {
 .inventory-layout-panel.standalone {
   margin-top: 1rem;
   display: grid;
-  grid-template-columns: 200px 1fr;
+  grid-template-columns: 220px 1fr;
   gap: 1rem;
+}
+
+.inventory-section {
+  background: #1a2034;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 0.8rem;
+}
+
+.inventory-column {
+  padding: 0.2rem 0;
+}
+
+.section-limit {
+  margin-left: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-weight: 500;
 }
 
 .armor-grid {
@@ -265,7 +339,7 @@ main {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
   gap: 0.7rem;
-  padding: 0.4rem;
+  padding: 0.4rem 0;
 }
 
 .inventory-item {
@@ -286,9 +360,16 @@ main {
 
 .inventory-empty {
   background: rgba(255, 255, 255, 0.04);
-  border-style: dashed;
+  border-style: solid;
   border-color: rgba(255, 255, 255, 0.18);
   box-shadow: none;
+}
+
+.inventory-empty:hover,
+.inventory-empty:focus-within {
+  box-shadow: none;
+  transform: none;
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 .armor-item {
@@ -306,6 +387,7 @@ main {
   border-color: rgba(242, 215, 160, 0.65);
   box-shadow: 0 0 12px rgba(217, 181, 113, 0.38);
   transform: translateY(-1px);
+  outline: none;
 }
 
 .spell-web-wrap {
@@ -315,13 +397,45 @@ main {
 
 .spell-web {
   width: 100%;
-  min-width: 700px;
+  min-width: 0;
   display: block;
 }
 
-.web-link {
-  stroke: rgba(194, 155, 78, 0.8);
-  stroke-width: 2;
+.web-link-main {
+  stroke: url(#goldThread);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  filter: url(#threadGlow);
+}
+
+.web-link-wisp {
+  fill: none;
+  stroke-linecap: round;
+  opacity: 0.7;
+  filter: blur(0.4px);
+  animation: wispPulse 3.8s ease-in-out infinite;
+  animation-delay: var(--wisp-delay, 0s);
+}
+
+.web-link-wisp.wisp-a {
+  stroke: rgba(227, 208, 169, 0.55);
+  stroke-width: 1.5;
+}
+
+.web-link-wisp.wisp-b {
+  stroke: rgba(175, 214, 255, 0.42);
+  stroke-width: 1.2;
+  animation-duration: 5.1s;
+}
+
+@keyframes wispPulse {
+  0%,
+  100% {
+    opacity: 0.28;
+  }
+  50% {
+    opacity: 0.88;
+  }
 }
 
 .web-node {
@@ -359,7 +473,9 @@ main {
 .web-node.unlocked circle {
   fill: #2a3148;
   stroke: #d7b77a;
-  filter: drop-shadow(0 0 6px rgba(211, 172, 101, 0.35));
+  filter:
+    drop-shadow(0 0 6px rgba(211, 172, 101, 0.35))
+    drop-shadow(0 0 14px rgba(238, 195, 113, 0.25));
 }
 
 .web-node.unlocked:hover circle,
@@ -374,20 +490,117 @@ main {
   font-size: 0.9rem;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 900px) {
+  .hero {
+    padding: 2.2rem 1rem 1.1rem;
+  }
+
+  main {
+    padding: 1rem;
+  }
+
+  .card-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+
   .inventory-layout-panel.standalone {
     grid-template-columns: 1fr;
+    gap: 0.9rem;
+  }
+
+  .inventory-column {
+    padding: 0;
   }
 
   .inventory-grid-large {
-    grid-template-columns: repeat(5, minmax(60px, 1fr));
+    grid-template-columns: repeat(5, minmax(58px, 1fr));
   }
 }
 
 @media (max-width: 640px) {
   .hero,
-  main {
-    padding-left: 1rem;
-    padding-right: 1rem;
+  main,
+  .inventory-page {
+    padding-left: 0.8rem;
+    padding-right: 0.8rem;
+  }
+
+  .detail-panel,
+  .panel,
+  .inventory-section {
+    padding: 0.75rem;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .utility-tab,
+  .close-btn {
+    width: 100%;
+  }
+
+  .inventory-grid {
+    gap: 0.5rem;
+  }
+
+  .inventory-grid-large {
+    grid-template-columns: repeat(5, minmax(50px, 1fr));
+  }
+
+  .inventory-item {
+    min-height: 62px;
+    padding: 0.25rem;
+  }
+
+  .armor-item {
+    min-height: 68px;
+  }
+
+  .inventory-item img {
+    max-width: 56px;
+  }
+
+  .spell-web-wrap {
+    margin-top: 0.55rem;
+  }
+
+  .web-node text {
+    font-size: 8px;
+  }
+}
+
+@media (max-width: 420px) {
+  .hero h1 {
+    font-size: clamp(1.5rem, 8vw, 2rem);
+  }
+
+  .character-name {
+    font-size: 1.05rem;
+  }
+
+  .character-meta,
+  .hero p,
+  .web-note {
+    font-size: 0.83rem;
+  }
+
+  .inventory-grid-large {
+    grid-template-columns: repeat(5, minmax(44px, 1fr));
+  }
+
+  .inventory-item {
+    min-height: 56px;
+  }
+
+  .inventory-item img {
+    max-width: 48px;
+  }
+
+  .section-limit {
+    display: inline-block;
+    margin-left: 0.35rem;
+    font-size: 0.74rem;
   }
 }

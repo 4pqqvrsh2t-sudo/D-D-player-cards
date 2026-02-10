@@ -248,11 +248,31 @@ function layoutSpellWeb(spellWeb) {
   });
 
   const linkSvg = spellWeb.links
-    .map((link) => {
+    .map((link, index) => {
       const from = positioned.get(link.from);
       const to = positioned.get(link.to);
       if (!from || !to) return "";
-      return `<line x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}" class="web-link" />`;
+
+      const dx = to.x - from.x;
+      const dy = to.y - from.y;
+      const length = Math.hypot(dx, dy) || 1;
+      const nx = -dy / length;
+      const ny = dx / length;
+      const drift = 9 + (index % 3) * 4;
+      const midX = (from.x + to.x) / 2;
+      const midY = (from.y + to.y) / 2;
+
+      const wisp1Cx = Math.round(midX + nx * drift);
+      const wisp1Cy = Math.round(midY + ny * drift);
+      const wisp2Cx = Math.round(midX - nx * (drift * 0.7));
+      const wisp2Cy = Math.round(midY - ny * (drift * 0.7));
+
+      return `
+        <g class="web-link-group" style="--wisp-delay:${(index * 0.32).toFixed(2)}s">
+          <line x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}" class="web-link-main" />
+          <path d="M ${from.x} ${from.y} Q ${wisp1Cx} ${wisp1Cy} ${to.x} ${to.y}" class="web-link-wisp wisp-a" />
+          <path d="M ${from.x} ${from.y} Q ${wisp2Cx} ${wisp2Cy} ${to.x} ${to.y}" class="web-link-wisp wisp-b" />
+        </g>`;
     })
     .join("");
 
@@ -272,7 +292,21 @@ function layoutSpellWeb(spellWeb) {
   return `
     <div class="spell-web-wrap">
       <svg viewBox="0 0 ${width} ${height}" class="spell-web" role="img" aria-label="Spell progression web">
-        ${linkSvg}
+        <defs>
+          <linearGradient id="goldThread" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#8b6427" />
+            <stop offset="45%" stop-color="#d4ab57" />
+            <stop offset="100%" stop-color="#f5dc9c" />
+          </linearGradient>
+          <filter id="threadGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="1.8" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+        <g class="web-links">${linkSvg}</g>
         ${nodeSvg}
       </svg>
     </div>
@@ -291,6 +325,11 @@ function renderDetail(player) {
       <p>${player.classLevel} • ${player.race} • ${player.background}</p>
     </header>
 
+    <div class="detail-utilities">
+      <a class="utility-tab inventory-link" href="inventory.html?player=${player.index}">Open Inventory</a>
+      <a class="utility-tab inventory-link" href="spell.html?player=${player.index}">Open Spell Progression</a>
+    </div>
+
     <div class="detail-grid">
       <section class="panel">
         <h3>Core Stats</h3>
@@ -302,9 +341,6 @@ function renderDetail(player) {
         ${toList(player.canDo, "bullet-list")}
       </section>
 
-      <section class="panel inventory-jump-panel">
-        <a class="utility-tab inventory-link" href="inventory.html?player=${player.index}">Inventory</a>
-      </section>
 
       <section class="panel limits">
         <h3>Limits / Reminders</h3>
@@ -315,10 +351,6 @@ function renderDetail(player) {
       </section>
     </div>
 
-    <section class="panel spell-web-panel">
-      <h3>Spell Progression Web</h3>
-      ${layoutSpellWeb(player.spellWeb)}
-    </section>
   `;
 
 
