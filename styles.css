@@ -320,6 +320,10 @@ main {
   padding: 0.2rem 0;
 }
 
+.inventory-column h3 {
+  margin-bottom: 0;
+}
+
 .section-limit {
   margin-left: 0.5rem;
   font-size: 0.8rem;
@@ -352,7 +356,6 @@ main {
   padding: 0.35rem;
   transition: box-shadow 160ms ease, transform 160ms ease, border-color 160ms ease;
 }
-
 
 .inventory-grid-large {
   grid-template-columns: repeat(5, minmax(84px, 1fr));
