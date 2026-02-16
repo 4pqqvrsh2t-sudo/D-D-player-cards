@@ -86,11 +86,13 @@ const confirmOverlay = document.querySelector("#confirmOverlay");
 const confirmYesButton = document.querySelector("#confirmYes");
 const confirmNoButton = document.querySelector("#confirmNo");
 const confirmMessage = document.querySelector("#confirmMessage");
+const spellInfoCard = document.querySelector("#spellInfoCard");
 
 let selectedFormTags = new Set();
 let availableTags = [];
 let isEditMode = false;
 let isTabEditMode = false;
+let selectedInfoNodeId = null;
 
 const importanceToSize = {
   minor: 18,
@@ -228,6 +230,15 @@ function parseTags(raw) {
     .filter((tag, index, all) => all.findIndex((t) => t.toLowerCase() === tag.toLowerCase()) === index);
 }
 
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
 function tagsToDisplay(tags) {
   if (!Array.isArray(tags) || tags.length === 0) return '<span class="tag-empty">No tags</span>';
   return tags.map((tag) => `<span class="ability-tag">${tag}</span>`).join("");
@@ -274,6 +285,8 @@ function normalizeTree(tree) {
     }
     node.tags = parseTags(Array.isArray(node.tags) ? node.tags.join(",") : "");
     node.importance = typeof node.importance === "string" ? node.importance : importanceFromSize(node.size);
+    node.abilityKind = typeof node.abilityKind === "string" && node.abilityKind.trim() ? node.abilityKind.trim() : "Spell";
+    node.spellDescription = typeof node.spellDescription === "string" ? node.spellDescription.trim() : "";
     if (Number(node.tier) === 0) {
       node.unlocked = true;
     }
@@ -534,6 +547,61 @@ function bindTreeDragHandlers() {
 
   svg.addEventListener("pointerup", finishDrag);
   svg.addEventListener("pointercancel", finishDrag);
+
+  svg.addEventListener("click", (event) => {
+    if (isEditMode) return;
+    const nodeCore = event.target.closest(".node-core");
+    if (!nodeCore) return;
+
+    const nodeId = nodeCore.dataset.nodeId;
+    if (!nodeId) return;
+    selectedInfoNodeId = nodeId;
+    renderSpellInfoCard();
+  });
+}
+
+function renderSpellInfoCard() {
+  if (!spellInfoCard) return;
+
+  if (isEditMode || !selectedInfoNodeId) {
+    spellInfoCard.hidden = true;
+    spellInfoCard.innerHTML = "";
+    return;
+  }
+
+  const node = findNode(getActiveTree(), selectedInfoNodeId);
+  if (!node) {
+    spellInfoCard.hidden = true;
+    spellInfoCard.innerHTML = "";
+    return;
+  }
+
+  const tagsMarkup = Array.isArray(node.tags) && node.tags.length > 0
+    ? node.tags.map((tag) => `<span class="ability-tag">${escapeHtml(tag)}</span>`).join("")
+    : '<span class="tag-empty">No tags</span>';
+  const spellDescription = node.spellDescription || "No spell description yet.";
+
+  spellInfoCard.innerHTML = `
+    <div class="spell-info-header">
+      <strong class="spell-info-name">${escapeHtml(node.label)}</strong>
+      <button type="button" class="spell-info-close" aria-label="Close spell details">×</button>
+    </div>
+    <div class="spell-info-meta">Tier ${node.tier + 1}</div>
+    <div class="spell-info-kind">${escapeHtml(node.abilityKind || "Spell")}</div>
+    <p class="spell-info-description">${escapeHtml(spellDescription)}</p>
+    <div class="spell-info-tags">
+      <span class="tag-values">${tagsMarkup}</span>
+    </div>
+  `;
+  spellInfoCard.hidden = false;
+
+  const closeButton = spellInfoCard.querySelector(".spell-info-close");
+  if (closeButton) {
+    closeButton.addEventListener("click", () => {
+      selectedInfoNodeId = null;
+      renderSpellInfoCard();
+    });
+  }
 }
 
 function renderAbilityList() {
@@ -548,7 +616,6 @@ function renderAbilityList() {
           <span class="tag-label">Tags:</span>
           <span class="tag-values">${tagsToDisplay(node.tags)}</span>
         </div>
-        <button type="button" class="edit-tags-btn" data-node-id="${node.id}">Edit Tags</button>
       </li>`
     )
     .join("");
@@ -701,6 +768,12 @@ function renderTabs() {
       renderAll();
     });
   });
+  prereqSelect.innerHTML = options.join("");
+}
+
+function createNewTab() {
+  const rawLabel = window.prompt("Name your new tab (example: Summoner)");
+  if (rawLabel === null) return;
 
   tabBar.querySelectorAll(".tab-mini-btn[data-delete-tab]").forEach((button) => {
     button.addEventListener("click", async () => {
@@ -744,6 +817,7 @@ function renderAll() {
   renderTabs();
   renderTagPicker();
   bindTreeDragHandlers();
+  renderSpellInfoCard();
 }
 
 function renderEditButton() {
@@ -808,6 +882,9 @@ abilityForm.addEventListener("submit", (event) => {
   const label = String(formData.get("abilityName") ?? "").trim();
   const tier = Number(formData.get("abilityTier") ?? 0);
   const importance = String(formData.get("abilityImportance") ?? "base");
+  const abilityKindRaw = String(formData.get("abilityKind") ?? "Spell").trim();
+  const abilityKind = abilityKindRaw || "Spell";
+  const spellDescription = String(formData.get("abilitySpellDescription") ?? "").trim();
   const prereq = String(formData.get("abilityPrereq") ?? "");
   const tags = [...selectedFormTags];
   const status = String(formData.get("abilityStatus") ?? "unlocked");
@@ -837,6 +914,8 @@ abilityForm.addEventListener("submit", (event) => {
     tier: boundedTier,
     size: boundedSize,
     importance: boundedImportance,
+    abilityKind,
+    spellDescription,
     unlocked,
     x: position.x,
     y: position.y,
@@ -851,6 +930,8 @@ abilityForm.addEventListener("submit", (event) => {
   saveState();
   abilityForm.reset();
   document.querySelector("#abilityImportance").value = "base";
+  document.querySelector("#abilityKind").value = "Spell";
+  document.querySelector("#abilitySpellDescription").value = "";
   document.querySelector("#abilityStatus").value = "unlocked";
   selectedFormTags = new Set();
   renderAll();
@@ -884,23 +965,6 @@ clearTagsButton.addEventListener("click", () => {
 });
 
 
-abilityList.addEventListener("click", (event) => {
-  const button = event.target.closest(".edit-tags-btn");
-  if (!button) return;
-
-  const nodeId = button.dataset.nodeId;
-  const node = findNode(getActiveTree(), nodeId);
-  if (!node) return;
-
-  const current = Array.isArray(node.tags) ? node.tags.join(", ") : "";
-  const next = window.prompt(`Edit tags for ${node.label} (comma separated):`, current);
-  if (next === null) return;
-
-  node.tags = parseTags(next);
-  saveState();
-  renderAbilityList();
-});
-
 resetTreeButton.addEventListener("click", async () => {
   const ok = await requestPermanentConfirmation(`Reset "${treeTemplates[activeTab].label}" back to template values?`);
   if (!ok) return;
@@ -916,6 +980,9 @@ renderEditTabsButton();
 if (editWebButton) {
   editWebButton.addEventListener("click", () => {
     isEditMode = !isEditMode;
+    if (isEditMode) {
+      selectedInfoNodeId = null;
+    }
     renderEditButton();
     renderAll();
   });

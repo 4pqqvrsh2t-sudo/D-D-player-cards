@@ -226,6 +226,20 @@ button {
   color: var(--text);
 }
 
+.ability-form textarea {
+  min-height: 92px;
+  padding: 0.5rem 0.55rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: rgba(10, 13, 22, 0.6);
+  color: var(--text);
+  resize: vertical;
+}
+
+.description-field {
+  grid-column: 1 / -1;
+}
+
 .check-row {
   display: flex !important;
   align-items: center;
@@ -307,6 +321,58 @@ button.ghost {
 .tree-wrap {
   overflow-x: auto;
   margin-top: 0.8rem;
+}
+
+.spell-info-card {
+  margin-top: 0.85rem;
+  border: 1px solid rgba(212, 171, 87, 0.35);
+  border-radius: 10px;
+  background: rgba(10, 13, 22, 0.55);
+  padding: 0.7rem 0.8rem;
+}
+
+.spell-info-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+}
+
+.spell-info-name {
+  font-size: 1.5rem;
+  line-height: 1.1;
+}
+
+.spell-info-close {
+  min-height: 28px;
+  min-width: 28px;
+  border-radius: 8px;
+  padding: 0;
+  line-height: 1;
+  font-size: 1rem;
+}
+
+.spell-info-meta {
+  margin-top: 0.25rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.spell-info-description {
+  margin: 0.7rem 0 0;
+  color: var(--text);
+  line-height: 1.35;
+}
+
+.spell-info-kind {
+  margin-top: 0.2rem;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-style: italic;
+}
+
+.spell-info-tags {
+  margin-top: 0.6rem;
 }
 
 .tree {
@@ -431,14 +497,6 @@ button.ghost {
 .tag-empty {
   color: var(--muted);
   opacity: 0.8;
-}
-
-.edit-tags-btn {
-  justify-self: start;
-  min-height: 32px;
-  border-radius: 8px;
-  padding: 0.2rem 0.6rem;
-  font-size: 0.82rem;
 }
 
 @media (max-width: 680px) {

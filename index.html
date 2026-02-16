@@ -28,6 +28,7 @@
           <button id="editWebButton" type="button" class="ghost edit-web-btn" aria-pressed="false">Edit</button>
         </div>
         <div id="treeCanvas"></div>
+        <div id="spellInfoCard" class="spell-info-card" hidden></div>
       </section>
 
       <section class="panel">
@@ -64,6 +65,20 @@
             <select id="abilityPrereq" name="abilityPrereq">
               <option value="">None (starter ability)</option>
             </select>
+          </label>
+
+          <label>
+            Description type
+            <select id="abilityKind" name="abilityKind">
+              <option value="Spell" selected>Spell</option>
+              <option value="Stance">Stance</option>
+              <option value="Skill">Skill</option>
+            </select>
+          </label>
+
+          <label class="description-field">
+            Spell description
+            <textarea id="abilitySpellDescription" name="abilitySpellDescription" rows="3" maxlength="240" placeholder="Describe what this spell does..."></textarea>
           </label>
 
           <div class="tag-picker-wrap" aria-label="Ability tags">
