@@ -3,37 +3,106 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>D&D Player Cards</title>
+    <title>D&D Ability Tech Tree Builder</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <header class="hero">
-      <p class="eyebrow">Campaign Companion</p>
-      <h1>D&D Player Cards</h1>
-      <p>
-        Click a card to slide into a detailed view with race traits, core stats,
-        reminders, and spell progression.
-      </p>
-    </header>
+    <main class="page">
+      <header class="hero">
+        <p class="eyebrow">D&D Campaign Tool</p>
+        <h1>Ability Tech Tree Builder</h1>
+        <p>Use tabs for role-based trees (Tank, Long Range, Support), each with its own web.</p>
+      </header>
 
-    <main>
-      <section class="card-grid" id="cardGrid" aria-label="Player cards"></section>
+      <section class="panel">
+        <div class="tabs-head">
+          <h2>Role Tabs</h2>
+          <button id="editTabsButton" type="button" class="ghost edit-tabs-btn" aria-pressed="false">Edit</button>
+        </div>
+        <div id="tabBar" class="tab-bar" role="tablist" aria-label="Ability tree categories"></div>
+      </section>
 
-      <section id="detailPanel" class="detail-panel" aria-live="polite" hidden>
-        <button id="closeDetail" class="close-btn" type="button">← Back to cards</button>
-        <article id="detailContent"></article>
+      <section class="panel">
+        <div class="tree-head">
+          <h2 id="treeTitle">Ability Web</h2>
+          <button id="editWebButton" type="button" class="ghost edit-web-btn" aria-pressed="false">Edit</button>
+        </div>
+        <div id="treeCanvas"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Add Ability</h2>
+        <form id="abilityForm" class="ability-form">
+          <label>
+            Ability name
+            <input id="abilityName" name="abilityName" type="text" maxlength="28" required placeholder="e.g. Arcane Echo" />
+          </label>
+
+          <label>
+            Tier
+            <select id="abilityTier" name="abilityTier">
+              <option value="0">Tier 1</option>
+              <option value="1">Tier 2</option>
+              <option value="2">Tier 3</option>
+              <option value="3">Tier 4</option>
+              <option value="4">Tier 5</option>
+            </select>
+          </label>
+
+          <label>
+            Importance
+            <select id="abilityImportance" name="abilityImportance">
+              <option value="minor">Small (Minor)</option>
+              <option value="base" selected>Medium (Base)</option>
+              <option value="major">Large (Major)</option>
+              <option value="main">XL (Main)</option>
+            </select>
+          </label>
+
+          <label>
+            Prerequisite (optional)
+            <select id="abilityPrereq" name="abilityPrereq">
+              <option value="">None (starter ability)</option>
+            </select>
+          </label>
+
+          <div class="tag-picker-wrap" aria-label="Ability tags">
+            <p class="tag-picker-title">Tags (invisible metadata)</p>
+            <div id="tagPicker" class="tag-picker" role="group" aria-label="Choose ability tags"></div>
+            <button id="clearTags" type="button" class="ghost clear-tags-btn">Remove all tags</button>
+          </div>
+
+          <label>
+            Status
+            <select id="abilityStatus" name="abilityStatus">
+              <option value="locked">Locked</option>
+              <option value="unlocked" selected>Unlocked</option>
+            </select>
+          </label>
+
+          <div class="actions">
+            <button type="submit">Add Ability</button>
+            <button id="resetTree" type="button" class="ghost">Reset Current Tab</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel">
+        <h2 id="listTitle">Abilities</h2>
+        <div id="abilityList"></div>
       </section>
     </main>
 
-    <template id="cardTemplate">
-      <article class="player-card" tabindex="0" role="button">
-        <div class="card-top">
-          <h2 class="character-name"></h2>
-          <p class="character-meta"></p>
+    <div id="confirmOverlay" class="confirm-overlay" hidden>
+      <div class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+        <h3 id="confirmTitle">Are you sure? This action is <strong class="permanent-word">Permanent</strong>.</h3>
+        <p id="confirmMessage" class="confirm-message"></p>
+        <div class="confirm-actions">
+          <button id="confirmYes" type="button">Yes</button>
+          <button id="confirmNo" type="button" class="ghost">No</button>
         </div>
-        <p class="card-hook"></p>
-      </article>
-    </template>
+      </div>
+    </div>
 
     <script src="app.js"></script>
   </body>
