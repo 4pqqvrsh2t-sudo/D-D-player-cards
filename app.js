@@ -162,6 +162,45 @@ function tagsToDisplay(tags) {
   return tags.map((tag) => `<span class="ability-tag">${tag}</span>`).join("");
 }
 
+
+function defaultAttachments(size) {
+  const radius = attachmentRadius(size);
+  return Array.from({ length: 8 }, (_, index) => {
+    const angle = (Math.PI * 2 * index) / 8;
+    return {
+      dx: Math.round(Math.cos(angle) * radius),
+      dy: Math.round(Math.sin(angle) * radius)
+    };
+  });
+}
+
+function cloneTree(tree) {
+  return {
+    nodes: tree.nodes.map((node) => ({
+      ...node,
+      attachments: (node.attachments ?? defaultAttachments(node.size)).map((pt) => ({ ...pt }))
+    })),
+    links: tree.links.map((link) => ({ ...link }))
+  };
+}
+
+function toSlug(value) {
+  return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "ability";
+}
+
+function parseTags(raw) {
+  return String(raw ?? "")
+    .split(",")
+    .map((tag) => tag.trim())
+    .filter(Boolean)
+    .filter((tag, index, all) => all.findIndex((t) => t.toLowerCase() === tag.toLowerCase()) === index);
+}
+
+function tagsToDisplay(tags) {
+  if (!Array.isArray(tags) || tags.length === 0) return '<span class="tag-empty">No tags</span>';
+  return tags.map((tag) => `<span class="ability-tag">${tag}</span>`).join("");
+}
+
 function loadTemplates() {
   const templates = Object.fromEntries(
     Object.entries(builtInTreeTemplates).map(([key, template]) => [key, cloneTree({ ...template })])
@@ -182,6 +221,10 @@ function loadTemplates() {
   } catch {
     return templates;
   }
+
+  return templates;
+}
+
 
   return templates;
 }
@@ -323,6 +366,7 @@ function createTreeMarkup(tree) {
   const editClass = isEditMode ? "is-editing" : "";
 
   return `<div class="tree-wrap ${editClass}"><svg id="abilityTreeSvg" viewBox="0 0 ${SVG_WIDTH} ${SVG_HEIGHT}" class="tree" aria-label="Ability tech tree for ${treeTemplates[activeTab].label}">
+  return `<div class="tree-wrap"><svg id="abilityTreeSvg" viewBox="0 0 ${SVG_WIDTH} ${SVG_HEIGHT}" class="tree" aria-label="Ability tech tree for ${treeTemplates[activeTab].label}">
     <defs>
       <radialGradient id="orbUnlockedGradient" cx="35%" cy="30%" r="75%">
         <stop offset="0%" stop-color="#5f739c" />
@@ -514,6 +558,35 @@ function addTagOption() {
   selectedFormTags.add(availableTags.find((tag) => tag.toLowerCase() === normalized.toLowerCase()) ?? normalized);
   saveState();
   renderTagPicker();
+
+  function finishDrag() {
+    if (!dragState) return;
+    dragState = null;
+    saveState();
+  }
+
+  svg.addEventListener("pointerup", finishDrag);
+  svg.addEventListener("pointercancel", finishDrag);
+}
+
+function renderAbilityList() {
+  const rows = getActiveTree().nodes
+    .slice()
+    .sort((a, b) => a.tier - b.tier || a.label.localeCompare(b.label))
+    .map(
+      (node) => `
+      <li class="ability-item" data-node-id="${node.id}">
+        <div><strong>${node.label}</strong> — Tier ${node.tier + 1} • ${node.unlocked ? "Unlocked" : "Locked"}</div>
+        <div class="ability-tags-row">
+          <span class="tag-label">Tags:</span>
+          <span class="tag-values">${tagsToDisplay(node.tags)}</span>
+        </div>
+        <button type="button" class="edit-tags-btn" data-node-id="${node.id}">Edit Tags</button>
+      </li>`
+    )
+    .join("");
+
+  abilityList.innerHTML = `<ul class="list">${rows}</ul>`;
 }
 
 function renderPrereqOptions() {
@@ -615,6 +688,12 @@ function renderTabs() {
       renderAll();
     });
   });
+  prereqSelect.innerHTML = options.join("");
+}
+
+function createNewTab() {
+  const rawLabel = window.prompt("Name your new tab (example: Summoner)");
+  if (rawLabel === null) return;
 
   tabBar.querySelectorAll(".tab-mini-btn[data-delete-tab]").forEach((button) => {
     button.addEventListener("click", async () => {
@@ -630,6 +709,58 @@ function renderTabs() {
       if (activeTab === tabKey) {
         activeTab = Object.keys(treeTemplates)[0] ?? "tank";
       }
+  const label = rawLabel.trim();
+  if (!label) return;
+
+  const baseKey = toSlug(label);
+  let key = baseKey;
+  let counter = 2;
+  while (treeTemplates[key]) {
+    key = `${baseKey}-${counter}`;
+    counter += 1;
+  }
+
+  const template = {
+    label,
+    nodes: [
+      {
+        id: "core-ability",
+        label: "Core Ability",
+        tier: 0,
+        size: 22,
+        unlocked: true,
+        x: 390,
+        y: 156,
+        attachments: defaultAttachments(22),
+        tags: []
+      }
+    ],
+    links: []
+  };
+
+  treeTemplates[key] = cloneTree(template);
+  treesByTab[key] = cloneTree(template);
+  activeTab = key;
+  saveState();
+  renderAll();
+}
+
+function renderTabs() {
+  const roleButtons = Object.entries(treeTemplates)
+    .map(([key, template]) => {
+      const activeClass = key === activeTab ? "is-active" : "";
+      const selected = key === activeTab ? "true" : "false";
+      return `<button type="button" role="tab" class="tab-btn ${activeClass}" aria-selected="${selected}" data-tab="${key}">${template.label}</button>`;
+    })
+    .join("");
+
+  tabBar.innerHTML = `${roleButtons}<button type="button" class="tab-btn add-tab-btn" aria-label="Add tab">+</button>`;
+
+  tabBar.querySelectorAll(".tab-btn[data-tab]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const nextTab = button.dataset.tab;
+      if (!nextTab || nextTab === activeTab) return;
+      activeTab = nextTab;
       saveState();
       renderAll();
     });
@@ -646,6 +777,22 @@ function suggestNodePosition(tree, tier) {
 
 function renderAll() {
   normalizeActiveTab();
+
+  const addTabButton = tabBar.querySelector(".add-tab-btn");
+  if (addTabButton) {
+    addTabButton.addEventListener("click", createNewTab);
+  }
+}
+
+function suggestNodePosition(tree, tier) {
+  const nodesInTier = tree.nodes.filter((node) => node.tier === tier).length;
+  return {
+    x: Math.max(90, Math.min(810, 140 + nodesInTier * 120)),
+    y: 52 + tier * 84
+  };
+}
+
+function renderAll() {
   const tabLabel = treeTemplates[activeTab].label;
   treeTitle.textContent = `${tabLabel} Ability Web`;
   listTitle.textContent = `${tabLabel} Abilities`;
@@ -712,6 +859,9 @@ function requestPermanentConfirmation(message = "") {
   });
 }
 
+  bindTreeDragHandlers();
+}
+
 abilityForm.addEventListener("submit", (event) => {
   event.preventDefault();
 
@@ -722,6 +872,8 @@ abilityForm.addEventListener("submit", (event) => {
   const prereq = String(formData.get("abilityPrereq") ?? "");
   const tags = [...selectedFormTags];
   const status = String(formData.get("abilityStatus") ?? "unlocked");
+  const tags = parseTags(formData.get("abilityTags"));
+  const unlocked = formData.get("abilityUnlocked") === "on";
 
   if (!label) return;
 
@@ -835,3 +987,33 @@ if (editTabsButton) {
     renderAll();
   });
 }
+  document.querySelector("#abilityUnlocked").checked = true;
+  document.querySelector("#abilityTags").value = "";
+  renderAll();
+});
+
+
+abilityList.addEventListener("click", (event) => {
+  const button = event.target.closest(".edit-tags-btn");
+  if (!button) return;
+
+  const nodeId = button.dataset.nodeId;
+  const node = findNode(getActiveTree(), nodeId);
+  if (!node) return;
+
+  const current = Array.isArray(node.tags) ? node.tags.join(", ") : "";
+  const next = window.prompt(`Edit tags for ${node.label} (comma separated):`, current);
+  if (next === null) return;
+
+  node.tags = parseTags(next);
+  saveState();
+  renderAbilityList();
+});
+
+resetTreeButton.addEventListener("click", () => {
+  treesByTab[activeTab] = cloneTree(treeTemplates[activeTab]);
+  saveState();
+  renderAll();
+});
+
+renderAll();

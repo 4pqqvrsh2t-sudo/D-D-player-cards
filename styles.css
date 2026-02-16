@@ -248,6 +248,56 @@ button {
 
 .tag-picker-title {
   margin: 0;
+}
+
+.panel h2 {
+  margin: 0;
+  color: var(--accent);
+  font-size: 1.05rem;
+}
+
+
+.tab-bar {
+  margin-top: 0.8rem;
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.tab-btn {
+  min-height: 40px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: transparent;
+  color: var(--text);
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+
+.tab-btn.is-active {
+  border-color: rgba(212, 171, 87, 0.85);
+  background: rgba(212, 171, 87, 0.18);
+  box-shadow: 0 0 12px rgba(212, 171, 87, 0.3);
+}
+
+.add-tab-btn {
+  min-width: 42px;
+  padding: 0.5rem 0.9rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.ability-form {
+  margin-top: 0.85rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+
+.ability-form label {
+  display: grid;
+  gap: 0.35rem;
   color: var(--muted);
   font-size: 0.92rem;
 }
@@ -340,6 +390,87 @@ button.ghost {
 
 .node-core:active {
   cursor: default;
+input,
+select,
+button {
+  font: inherit;
+}
+
+.ability-form input,
+.ability-form select {
+  min-height: 42px;
+  padding: 0.5rem 0.55rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: rgba(10, 13, 22, 0.6);
+  color: var(--text);
+}
+
+.check-row {
+  display: flex !important;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text) !important;
+}
+
+.actions {
+  display: flex;
+  gap: 0.6rem;
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+}
+
+button {
+  min-height: 42px;
+  border-radius: 999px;
+  border: 1px solid rgba(212, 171, 87, 0.55);
+  background: rgba(212, 171, 87, 0.14);
+  color: var(--text);
+  padding: 0.55rem 1rem;
+  cursor: pointer;
+}
+
+button.ghost {
+  border-color: rgba(255, 255, 255, 0.25);
+  background: transparent;
+}
+
+.tree-wrap {
+  overflow-x: auto;
+  margin-top: 0.8rem;
+}
+
+.tree {
+  width: 100%;
+  min-width: 680px;
+}
+
+.web-link {
+  stroke: rgba(233, 201, 132, 0.75);
+  stroke-width: 2;
+}
+
+.node-core circle {
+  stroke-width: 2;
+}
+
+.node-core text {
+  fill: var(--text);
+  font-size: 11px;
+  font-weight: 700;
+  pointer-events: none;
+  paint-order: stroke;
+  stroke: rgba(12, 15, 25, 0.55);
+  stroke-width: 2px;
+}
+
+
+.node-core {
+  cursor: grab;
+}
+
+.node-core:active {
+  cursor: grabbing;
 }
 
 .attachment-layer {
@@ -356,6 +487,12 @@ button.ghost {
 
 .attach-handle:active {
   cursor: default;
+  pointer-events: all;
+  cursor: grab;
+}
+
+.attach-handle:active {
+  cursor: grabbing;
 }
 
 .node-core.on circle {
@@ -384,6 +521,33 @@ button.ghost {
 
 .tree-wrap.is-editing .attach-handle:active {
   cursor: grabbing;
+}
+
+.list {
+  margin: 0.8rem 0 0;
+  padding-left: 1rem;
+  line-height: 1.4;
+}
+
+
+.ability-item {
+  margin-bottom: 0.75rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.ability-tags-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.tag-label {
+  color: var(--accent);
+  font-weight: 600;
 }
 
 .list {
