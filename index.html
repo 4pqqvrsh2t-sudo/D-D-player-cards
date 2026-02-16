@@ -95,6 +95,15 @@
             </select>
           </label>
 
+          <label>
+            Type
+            <select id="abilityType" name="abilityType">
+              <option value="Conventional" selected>Conventional</option>
+              <option value="Unconventional">Unconventional</option>
+              <option value="Forbidden">Forbidden</option>
+            </select>
+          </label>
+
           <div class="actions">
             <button type="submit">Add Ability</button>
             <button id="resetTree" type="button" class="ghost">Reset Current Tab</button>
@@ -102,10 +111,7 @@
         </form>
       </section>
 
-      <section class="panel">
-        <h2 id="listTitle">Abilities</h2>
-        <div id="abilityList"></div>
-      </section>
+    </main>
 
     <div id="confirmOverlay" class="confirm-overlay" hidden>
       <div class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">

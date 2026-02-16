@@ -70,14 +70,14 @@ const defaultAvailableTags = [
   "Summon"
 ];
 
+const AURA_BOUNDS_PADDING = 26;
+
 const treeCanvas = document.querySelector("#treeCanvas");
-const abilityList = document.querySelector("#abilityList");
 const prereqSelect = document.querySelector("#abilityPrereq");
 const abilityForm = document.querySelector("#abilityForm");
 const resetTreeButton = document.querySelector("#resetTree");
 const tabBar = document.querySelector("#tabBar");
 const treeTitle = document.querySelector("#treeTitle");
-const listTitle = document.querySelector("#listTitle");
 const tagPicker = document.querySelector("#tagPicker");
 const clearTagsButton = document.querySelector("#clearTags");
 const editWebButton = document.querySelector("#editWebButton");
@@ -128,7 +128,7 @@ function nodeRadius(node) {
 }
 
 function clampNodePositionToBounds(node, x, y) {
-  const radius = nodeRadius(node);
+  const radius = nodeRadius(node) + AURA_BOUNDS_PADDING;
   return {
     x: Math.max(radius, Math.min(SVG_WIDTH - radius, Math.round(x))),
     y: Math.max(radius, Math.min(SVG_HEIGHT - radius, Math.round(y)))
@@ -239,11 +239,6 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
-function tagsToDisplay(tags) {
-  if (!Array.isArray(tags) || tags.length === 0) return '<span class="tag-empty">No tags</span>';
-  return tags.map((tag) => `<span class="ability-tag">${tag}</span>`).join("");
-}
-
 function loadTemplates() {
   const templates = Object.fromEntries(
     Object.entries(builtInTreeTemplates).map(([key, template]) => [key, cloneTree({ ...template })])
@@ -287,6 +282,7 @@ function normalizeTree(tree) {
     node.importance = typeof node.importance === "string" ? node.importance : importanceFromSize(node.size);
     node.abilityKind = typeof node.abilityKind === "string" && node.abilityKind.trim() ? node.abilityKind.trim() : "Spell";
     node.spellDescription = typeof node.spellDescription === "string" ? node.spellDescription.trim() : "";
+    node.abilityType = node.abilityType === "Unconventional" || node.abilityType === "Forbidden" ? node.abilityType : "Conventional";
     if (Number(node.tier) === 0) {
       node.unlocked = true;
     }
@@ -400,13 +396,14 @@ function createTreeMarkup(tree) {
   const nodes = tree.nodes
     .map((node) => {
       const stateClass = node.unlocked ? "on" : "off";
+      const typeClass = node.abilityType === "Forbidden" ? "forbidden" : "";
       const handles = node.attachments
         .map((point, index) => `<circle class="attach-handle" data-node-id="${node.id}" data-attachment-index="${index}" cx="${node.x + point.dx}" cy="${node.y + point.dy}" r="2"></circle>`)
         .join("");
 
       return `
       <g class="node-layer" data-node-id="${node.id}">
-        <g class="node-core ${stateClass}" data-node-id="${node.id}" transform="translate(${node.x}, ${node.y})">
+        <g class="node-core ${stateClass} ${typeClass}" data-node-id="${node.id}" transform="translate(${node.x}, ${node.y})">
           <circle r="${node.size ?? 22}"></circle>
           <text y="4" text-anchor="middle">${node.label}</text>
         </g>
@@ -604,25 +601,6 @@ function renderSpellInfoCard() {
   }
 }
 
-function renderAbilityList() {
-  const rows = getActiveTree().nodes
-    .slice()
-    .sort((a, b) => a.tier - b.tier || a.label.localeCompare(b.label))
-    .map(
-      (node) => `
-      <li class="ability-item" data-node-id="${node.id}">
-        <div><strong>${node.label}</strong> — Tier ${node.tier + 1} • ${node.unlocked ? "Unlocked" : "Locked"}</div>
-        <div class="ability-tags-row">
-          <span class="tag-label">Tags:</span>
-          <span class="tag-values">${tagsToDisplay(node.tags)}</span>
-        </div>
-      </li>`
-    )
-    .join("");
-
-  abilityList.innerHTML = `<ul class="list">${rows}</ul>`;
-}
-
 function normalizeActiveTab() {
   if (treeTemplates[activeTab] && treesByTab[activeTab]) return;
   const firstTab = Object.keys(treeTemplates)[0];
@@ -768,12 +746,6 @@ function renderTabs() {
       renderAll();
     });
   });
-  prereqSelect.innerHTML = options.join("");
-}
-
-function createNewTab() {
-  const rawLabel = window.prompt("Name your new tab (example: Summoner)");
-  if (rawLabel === null) return;
 
   tabBar.querySelectorAll(".tab-mini-btn[data-delete-tab]").forEach((button) => {
     button.addEventListener("click", async () => {
@@ -810,9 +782,7 @@ function renderAll() {
   normalizeActiveTab();
   const tabLabel = treeTemplates[activeTab].label;
   treeTitle.textContent = `${tabLabel} Ability Web`;
-  listTitle.textContent = `${tabLabel} Abilities`;
   treeCanvas.innerHTML = createTreeMarkup(getActiveTree());
-  renderAbilityList();
   renderPrereqOptions();
   renderTabs();
   renderTagPicker();
@@ -888,6 +858,7 @@ abilityForm.addEventListener("submit", (event) => {
   const prereq = String(formData.get("abilityPrereq") ?? "");
   const tags = [...selectedFormTags];
   const status = String(formData.get("abilityStatus") ?? "unlocked");
+  const abilityType = String(formData.get("abilityType") ?? "Conventional");
 
   if (!label) return;
 
@@ -916,6 +887,7 @@ abilityForm.addEventListener("submit", (event) => {
     importance: boundedImportance,
     abilityKind,
     spellDescription,
+    abilityType,
     unlocked,
     x: position.x,
     y: position.y,
@@ -933,6 +905,7 @@ abilityForm.addEventListener("submit", (event) => {
   document.querySelector("#abilityKind").value = "Spell";
   document.querySelector("#abilitySpellDescription").value = "";
   document.querySelector("#abilityStatus").value = "unlocked";
+  document.querySelector("#abilityType").value = "Conventional";
   selectedFormTags = new Set();
   renderAll();
 });
