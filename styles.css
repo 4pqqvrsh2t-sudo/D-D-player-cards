@@ -57,12 +57,119 @@ body {
   font-size: 1.05rem;
 }
 
+.tabs-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.edit-tabs-btn {
+  min-height: 34px;
+  border-radius: 8px;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.85rem;
+}
+
+.edit-tabs-btn.is-active {
+  border-color: rgba(212, 171, 87, 0.85);
+  background: rgba(212, 171, 87, 0.2);
+}
+
+.tree-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.edit-web-btn {
+  min-height: 34px;
+  border-radius: 8px;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.85rem;
+}
+
+.edit-web-btn.is-active {
+  border-color: rgba(212, 171, 87, 0.85);
+  background: rgba(212, 171, 87, 0.2);
+}
+
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 8, 14, 0.72);
+  display: grid;
+  place-items: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.confirm-overlay[hidden] {
+  display: none;
+}
+
+.confirm-modal {
+  width: min(460px, 100%);
+  background: var(--panel);
+  border: 1px solid rgba(212, 171, 87, 0.35);
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+
+.confirm-modal h3 {
+  margin: 0;
+  color: var(--text);
+  line-height: 1.4;
+  font-size: 1rem;
+}
+
+.confirm-message {
+  margin: 0.45rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.permanent-word {
+  color: #ff6666;
+  font-weight: 800;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.9rem;
+}
+
 
 .tab-bar {
   margin-top: 0.8rem;
   display: flex;
   gap: 0.6rem;
   flex-wrap: wrap;
+}
+
+.tab-item {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.tab-edit-actions {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.tab-mini-btn {
+  min-height: 28px;
+  border-radius: 8px;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+.tab-mini-btn.danger {
+  border-color: rgba(220, 86, 86, 0.7);
+  background: rgba(220, 86, 86, 0.18);
 }
 
 .tab-btn {
@@ -133,6 +240,55 @@ button {
   flex-wrap: wrap;
 }
 
+.tag-picker-wrap {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.tag-picker-title {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.tag-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.tag-toggle {
+  min-height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(10, 13, 22, 0.55);
+  padding: 0.28rem 0.72rem;
+  font-size: 0.8rem;
+}
+
+.tag-toggle.is-selected {
+  border-color: rgba(212, 171, 87, 0.85);
+  background: rgba(212, 171, 87, 0.2);
+}
+
+.add-tag-btn {
+  min-width: 34px;
+  width: 34px;
+  padding: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.clear-tags-btn {
+  justify-self: start;
+  min-height: 34px;
+  padding: 0.3rem 0.7rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+}
+
 button {
   min-height: 42px;
   border-radius: 999px;
@@ -179,11 +335,11 @@ button.ghost {
 
 
 .node-core {
-  cursor: grab;
+  cursor: default;
 }
 
 .node-core:active {
-  cursor: grabbing;
+  cursor: default;
 }
 
 .attachment-layer {
@@ -194,12 +350,12 @@ button.ghost {
   fill: transparent;
   stroke: transparent;
   stroke-width: 14;
-  pointer-events: all;
-  cursor: grab;
+  pointer-events: none;
+  cursor: default;
 }
 
 .attach-handle:active {
-  cursor: grabbing;
+  cursor: default;
 }
 
 .node-core.on circle {
@@ -211,6 +367,23 @@ button.ghost {
 .node-core.off circle {
   fill: url(#orbLockedGradient);
   stroke: #9ea2ad;
+}
+
+.tree-wrap.is-editing .node-core {
+  cursor: grab;
+}
+
+.tree-wrap.is-editing .node-core:active {
+  cursor: grabbing;
+}
+
+.tree-wrap.is-editing .attach-handle {
+  pointer-events: all;
+  cursor: grab;
+}
+
+.tree-wrap.is-editing .attach-handle:active {
+  cursor: grabbing;
 }
 
 .list {

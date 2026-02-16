@@ -15,12 +15,18 @@
       </header>
 
       <section class="panel">
-        <h2>Role Tabs</h2>
+        <div class="tabs-head">
+          <h2>Role Tabs</h2>
+          <button id="editTabsButton" type="button" class="ghost edit-tabs-btn" aria-pressed="false">Edit</button>
+        </div>
         <div id="tabBar" class="tab-bar" role="tablist" aria-label="Ability tree categories"></div>
       </section>
 
       <section class="panel">
-        <h2 id="treeTitle">Ability Web</h2>
+        <div class="tree-head">
+          <h2 id="treeTitle">Ability Web</h2>
+          <button id="editWebButton" type="button" class="ghost edit-web-btn" aria-pressed="false">Edit</button>
+        </div>
         <div id="treeCanvas"></div>
       </section>
 
@@ -44,8 +50,13 @@
           </label>
 
           <label>
-            Orb size
-            <input id="abilitySize" name="abilitySize" type="number" min="16" max="32" value="22" />
+            Importance
+            <select id="abilityImportance" name="abilityImportance">
+              <option value="minor">Small (Minor)</option>
+              <option value="base" selected>Medium (Base)</option>
+              <option value="major">Large (Major)</option>
+              <option value="main">XL (Main)</option>
+            </select>
           </label>
 
           <label>
@@ -55,14 +66,18 @@
             </select>
           </label>
 
-          <label>
-            Tags (invisible metadata, comma separated)
-            <input id="abilityTags" name="abilityTags" type="text" placeholder="Magic, Magic dmg." />
-          </label>
+          <div class="tag-picker-wrap" aria-label="Ability tags">
+            <p class="tag-picker-title">Tags (invisible metadata)</p>
+            <div id="tagPicker" class="tag-picker" role="group" aria-label="Choose ability tags"></div>
+            <button id="clearTags" type="button" class="ghost clear-tags-btn">Remove all tags</button>
+          </div>
 
-          <label class="check-row">
-            <input id="abilityUnlocked" name="abilityUnlocked" type="checkbox" checked />
-            Unlocked now
+          <label>
+            Status
+            <select id="abilityStatus" name="abilityStatus">
+              <option value="locked">Locked</option>
+              <option value="unlocked" selected>Unlocked</option>
+            </select>
           </label>
 
           <div class="actions">
@@ -76,7 +91,17 @@
         <h2 id="listTitle">Abilities</h2>
         <div id="abilityList"></div>
       </section>
-    </main>
+
+    <div id="confirmOverlay" class="confirm-overlay" hidden>
+      <div class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+        <h3 id="confirmTitle">Are you sure? This action is <strong class="permanent-word">Permanent</strong>.</h3>
+        <p id="confirmMessage" class="confirm-message"></p>
+        <div class="confirm-actions">
+          <button id="confirmYes" type="button">Yes</button>
+          <button id="confirmNo" type="button" class="ghost">No</button>
+        </div>
+      </div>
+    </div>
 
     <script src="app.js"></script>
   </body>
