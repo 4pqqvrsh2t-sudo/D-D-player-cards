@@ -768,6 +768,12 @@ function renderTabs() {
       renderAll();
     });
   });
+  prereqSelect.innerHTML = options.join("");
+}
+
+function createNewTab() {
+  const rawLabel = window.prompt("Name your new tab (example: Summoner)");
+  if (rawLabel === null) return;
 
   tabBar.querySelectorAll(".tab-mini-btn[data-delete-tab]").forEach((button) => {
     button.addEventListener("click", async () => {
