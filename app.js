@@ -85,6 +85,7 @@ const editTabsButton = document.querySelector("#editTabsButton");
 const confirmOverlay = document.querySelector("#confirmOverlay");
 const confirmYesButton = document.querySelector("#confirmYes");
 const confirmNoButton = document.querySelector("#confirmNo");
+const confirmMessage = document.querySelector("#confirmMessage");
 
 let selectedFormTags = new Set();
 let availableTags = [];
@@ -621,7 +622,7 @@ function renderTabs() {
       if (!tabKey || !treeTemplates[tabKey]) return;
       if (Object.keys(treeTemplates).length <= 1) return;
 
-      const ok = await requestPermanentConfirmation();
+      const ok = await requestPermanentConfirmation(`Delete tab "${treeTemplates[tabKey].label}"?`);
       if (!ok) return;
 
       delete treeTemplates[tabKey];
@@ -670,10 +671,15 @@ function renderEditTabsButton() {
   editTabsButton.classList.toggle("is-active", isTabEditMode);
 }
 
-function requestPermanentConfirmation() {
+function requestPermanentConfirmation(message = "") {
   if (!confirmOverlay || !confirmYesButton || !confirmNoButton) return Promise.resolve(true);
 
+  if (confirmMessage) {
+    confirmMessage.textContent = String(message);
+  }
+
   confirmOverlay.hidden = false;
+  confirmYesButton.focus();
 
   return new Promise((resolve) => {
     const onYes = () => {
@@ -687,17 +693,22 @@ function requestPermanentConfirmation() {
     const onOverlay = (event) => {
       if (event.target === confirmOverlay) onNo();
     };
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") onNo();
+    };
 
     function cleanup() {
       confirmOverlay.hidden = true;
       confirmYesButton.removeEventListener("click", onYes);
       confirmNoButton.removeEventListener("click", onNo);
       confirmOverlay.removeEventListener("click", onOverlay);
+      document.removeEventListener("keydown", onKeyDown);
     }
 
     confirmYesButton.addEventListener("click", onYes);
     confirmNoButton.addEventListener("click", onNo);
     confirmOverlay.addEventListener("click", onOverlay);
+    document.addEventListener("keydown", onKeyDown);
   });
 }
 
@@ -798,7 +809,7 @@ abilityList.addEventListener("click", (event) => {
 });
 
 resetTreeButton.addEventListener("click", async () => {
-  const ok = await requestPermanentConfirmation();
+  const ok = await requestPermanentConfirmation(`Reset "${treeTemplates[activeTab].label}" back to template values?`);
   if (!ok) return;
   treesByTab[activeTab] = cloneTree(treeTemplates[activeTab]);
   saveState();
