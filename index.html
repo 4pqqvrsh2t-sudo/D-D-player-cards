@@ -24,8 +24,28 @@
 
       <section class="panel">
         <div class="tree-head">
-          <h2 id="treeTitle">Ability Web</h2>
-          <button id="editWebButton" type="button" class="ghost edit-web-btn" aria-pressed="false">Edit</button>
+          <h2 id="treeTitle">Spells &amp; Abilities</h2>
+          <div class="tree-head-actions">
+            <button id="filterWebButton" type="button" class="ghost filter-web-btn" aria-pressed="false">Filter</button>
+            <button id="editWebButton" type="button" class="ghost edit-web-btn" aria-pressed="false">Edit</button>
+          </div>
+        </div>
+        <div id="filterPanel" class="filter-panel" hidden>
+          <label>
+            Filter by
+            <select id="filterMode" name="filterMode">
+              <option value="none" selected>None</option>
+              <option value="descriptionType">Description type</option>
+              <option value="tag">Tag</option>
+            </select>
+          </label>
+          <label>
+            Value
+            <select id="filterValue" name="filterValue" disabled>
+              <option value="">Select a filter</option>
+            </select>
+          </label>
+          <button id="clearFilter" type="button" class="ghost">Clear Filter</button>
         </div>
         <div id="treeCanvas"></div>
         <div id="spellInfoCard" class="spell-info-card" hidden></div>
@@ -36,7 +56,7 @@
         <form id="abilityForm" class="ability-form">
           <label>
             Ability name
-            <input id="abilityName" name="abilityName" type="text" maxlength="28" required placeholder="e.g. Arcane Echo" />
+            <input id="abilityName" name="abilityName" type="text" required placeholder="e.g. Arcane Echo" />
           </label>
 
           <label>
@@ -61,9 +81,8 @@
           </label>
 
           <label>
-            Prerequisite (optional)
-            <select id="abilityPrereq" name="abilityPrereq">
-              <option value="">None (starter ability)</option>
+            Prerequisites (choose at least 1)
+            <select id="abilityPrereq" name="abilityPrereq" multiple size="5" required>
             </select>
           </label>
 

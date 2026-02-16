@@ -70,6 +70,8 @@ const defaultAvailableTags = [
   "Summon"
 ];
 
+const ABILITY_NAME_MAX_LENGTH = 32;
+
 const AURA_BOUNDS_PADDING = 26;
 
 const treeCanvas = document.querySelector("#treeCanvas");
@@ -81,18 +83,27 @@ const treeTitle = document.querySelector("#treeTitle");
 const tagPicker = document.querySelector("#tagPicker");
 const clearTagsButton = document.querySelector("#clearTags");
 const editWebButton = document.querySelector("#editWebButton");
+const filterWebButton = document.querySelector("#filterWebButton");
+const filterPanel = document.querySelector("#filterPanel");
+const filterModeSelect = document.querySelector("#filterMode");
+const filterValueSelect = document.querySelector("#filterValue");
+const clearFilterButton = document.querySelector("#clearFilter");
 const editTabsButton = document.querySelector("#editTabsButton");
 const confirmOverlay = document.querySelector("#confirmOverlay");
 const confirmYesButton = document.querySelector("#confirmYes");
 const confirmNoButton = document.querySelector("#confirmNo");
 const confirmMessage = document.querySelector("#confirmMessage");
 const spellInfoCard = document.querySelector("#spellInfoCard");
+const abilityNameInput = document.querySelector("#abilityName");
 
 let selectedFormTags = new Set();
 let availableTags = [];
 let isEditMode = false;
 let isTabEditMode = false;
 let selectedInfoNodeId = null;
+let isFilterPanelOpen = false;
+let activeFilterMode = "none";
+let activeFilterValue = "";
 
 const importanceToSize = {
   minor: 18,
@@ -379,6 +390,68 @@ function ensureLinkAttachmentIndices(tree) {
   });
 }
 
+function nodeMatchesActiveFilter(node) {
+  if (activeFilterMode === "none" || !activeFilterValue) return true;
+
+  if (activeFilterMode === "descriptionType") {
+    return (node.abilityKind ?? "Spell") === activeFilterValue;
+  }
+
+  if (activeFilterMode === "tag") {
+    return Array.isArray(node.tags) && node.tags.some((tag) => tag.toLowerCase() === activeFilterValue.toLowerCase());
+  }
+
+  return true;
+}
+
+function getFilterValues(mode) {
+  const tree = getActiveTree();
+  if (!tree) return [];
+
+  if (mode === "descriptionType") {
+    return [...new Set(tree.nodes.map((node) => node.abilityKind || "Spell"))].sort((a, b) => a.localeCompare(b));
+  }
+
+  if (mode === "tag") {
+    return [...new Set(tree.nodes.flatMap((node) => (Array.isArray(node.tags) ? node.tags : [])))].sort((a, b) => a.localeCompare(b));
+  }
+
+  return [];
+}
+
+function renderFilterPanel() {
+  if (!filterPanel || !filterWebButton || !filterModeSelect || !filterValueSelect) return;
+
+  filterPanel.hidden = !isFilterPanelOpen;
+  filterWebButton.classList.toggle("is-active", isFilterPanelOpen);
+  filterWebButton.setAttribute("aria-pressed", isFilterPanelOpen ? "true" : "false");
+
+  filterModeSelect.value = activeFilterMode;
+  const values = getFilterValues(activeFilterMode);
+  const options = values.map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`).join("");
+
+  if (activeFilterMode === "none") {
+    filterValueSelect.disabled = true;
+    filterValueSelect.innerHTML = '<option value="">Select a filter</option>';
+    activeFilterValue = "";
+    return;
+  }
+
+  if (values.length === 0) {
+    filterValueSelect.disabled = true;
+    filterValueSelect.innerHTML = '<option value="">No values available</option>';
+    activeFilterValue = "";
+    return;
+  }
+
+  filterValueSelect.disabled = false;
+  filterValueSelect.innerHTML = options;
+  if (!values.includes(activeFilterValue)) {
+    activeFilterValue = values[0];
+  }
+  filterValueSelect.value = activeFilterValue;
+}
+
 function createTreeMarkup(tree) {
   ensureLinkAttachmentIndices(tree);
 
@@ -397,13 +470,15 @@ function createTreeMarkup(tree) {
     .map((node) => {
       const stateClass = node.unlocked ? "on" : "off";
       const typeClass = node.abilityType === "Forbidden" ? "forbidden" : "";
+      const filterClass = nodeMatchesActiveFilter(node) ? "" : "filtered-out";
+      const handleRadius = isEditMode ? 4 : 2;
       const handles = node.attachments
-        .map((point, index) => `<circle class="attach-handle" data-node-id="${node.id}" data-attachment-index="${index}" cx="${node.x + point.dx}" cy="${node.y + point.dy}" r="2"></circle>`)
+        .map((point, index) => `<circle class="attach-handle" data-node-id="${node.id}" data-attachment-index="${index}" cx="${node.x + point.dx}" cy="${node.y + point.dy}" r="${handleRadius}"></circle>`)
         .join("");
 
       return `
       <g class="node-layer" data-node-id="${node.id}">
-        <g class="node-core ${stateClass} ${typeClass}" data-node-id="${node.id}" transform="translate(${node.x}, ${node.y})">
+        <g class="node-core ${stateClass} ${typeClass} ${filterClass}" data-node-id="${node.id}" transform="translate(${node.x}, ${node.y})">
           <circle r="${node.size ?? 22}"></circle>
           <text y="4" text-anchor="middle">${node.label}</text>
         </g>
@@ -648,11 +723,17 @@ function addTagOption() {
 }
 
 function renderPrereqOptions() {
-  const options = ['<option value="">None (starter ability)</option>'];
+  const selectedValues = Array.from(prereqSelect.selectedOptions ?? []).map((option) => option.value);
+  const options = [];
   getActiveTree().nodes.forEach((node) => {
     options.push(`<option value="${node.id}">${node.label}</option>`);
   });
   prereqSelect.innerHTML = options.join("");
+
+  selectedValues.forEach((value) => {
+    const option = prereqSelect.querySelector(`option[value="${value}"]`);
+    if (option) option.selected = true;
+  });
 }
 
 function createNewTab() {
@@ -781,11 +862,12 @@ function suggestNodePosition(tree, tier) {
 function renderAll() {
   normalizeActiveTab();
   const tabLabel = treeTemplates[activeTab].label;
-  treeTitle.textContent = `${tabLabel} Ability Web`;
+  treeTitle.textContent = `${tabLabel} Spells & Abilities`;
   treeCanvas.innerHTML = createTreeMarkup(getActiveTree());
   renderPrereqOptions();
   renderTabs();
   renderTagPicker();
+  renderFilterPanel();
   bindTreeDragHandlers();
   renderSpellInfoCard();
 }
@@ -849,18 +931,24 @@ abilityForm.addEventListener("submit", (event) => {
   event.preventDefault();
 
   const formData = new FormData(abilityForm);
-  const label = String(formData.get("abilityName") ?? "").trim();
+  const label = String(formData.get("abilityName") ?? "").trim().slice(0, ABILITY_NAME_MAX_LENGTH);
   const tier = Number(formData.get("abilityTier") ?? 0);
   const importance = String(formData.get("abilityImportance") ?? "base");
   const abilityKindRaw = String(formData.get("abilityKind") ?? "Spell").trim();
   const abilityKind = abilityKindRaw || "Spell";
   const spellDescription = String(formData.get("abilitySpellDescription") ?? "").trim();
-  const prereq = String(formData.get("abilityPrereq") ?? "");
+  const prereqs = Array.from(prereqSelect.selectedOptions ?? [])
+    .map((option) => option.value)
+    .filter(Boolean);
   const tags = [...selectedFormTags];
   const status = String(formData.get("abilityStatus") ?? "unlocked");
   const abilityType = String(formData.get("abilityType") ?? "Conventional");
 
   if (!label) return;
+  if (prereqs.length < 1) {
+    window.alert("Choose at least 1 prerequisite.");
+    return;
+  }
 
   const activeTree = getActiveTree();
   const baseId = toSlug(label);
@@ -895,9 +983,9 @@ abilityForm.addEventListener("submit", (event) => {
     tags
   });
 
-  if (prereq) {
+  prereqs.forEach((prereq) => {
     activeTree.links.push({ from: prereq, to: id });
-  }
+  });
 
   saveState();
   abilityForm.reset();
@@ -950,6 +1038,10 @@ renderAll();
 renderEditButton();
 renderEditTabsButton();
 
+if (abilityNameInput) {
+  abilityNameInput.maxLength = ABILITY_NAME_MAX_LENGTH;
+}
+
 if (editWebButton) {
   editWebButton.addEventListener("click", () => {
     isEditMode = !isEditMode;
@@ -957,6 +1049,36 @@ if (editWebButton) {
       selectedInfoNodeId = null;
     }
     renderEditButton();
+    renderAll();
+  });
+}
+
+if (filterWebButton) {
+  filterWebButton.addEventListener("click", () => {
+    isFilterPanelOpen = !isFilterPanelOpen;
+    renderFilterPanel();
+  });
+}
+
+if (filterModeSelect) {
+  filterModeSelect.addEventListener("change", () => {
+    activeFilterMode = filterModeSelect.value;
+    activeFilterValue = "";
+    renderAll();
+  });
+}
+
+if (filterValueSelect) {
+  filterValueSelect.addEventListener("change", () => {
+    activeFilterValue = filterValueSelect.value;
+    renderAll();
+  });
+}
+
+if (clearFilterButton) {
+  clearFilterButton.addEventListener("click", () => {
+    activeFilterMode = "none";
+    activeFilterValue = "";
     renderAll();
   });
 }
