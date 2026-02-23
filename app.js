@@ -477,14 +477,14 @@ function createTreeMarkup(tree) {
         .join("");
       
       const deleteButton = isEditMode 
-        ? `<button class="delete-orb-btn" data-node-id="${node.id}" aria-label="Delete ${node.label}">×</button>`
+        ? `<button class="delete-orb-btn" data-node-id="${node.id}" aria-label="Delete ${escapeHtml(node.label)}">×</button>`
         : "";
 
       return `
       <g class="node-layer" data-node-id="${node.id}">
         <g class="node-core ${stateClass} ${typeClass} ${filterClass}" data-node-id="${node.id}" transform="translate(${node.x}, ${node.y})">
           <circle r="${node.size ?? 22}"></circle>
-          <text y="4" text-anchor="middle">${node.label}</text>
+          <text y="4" text-anchor="middle">${escapeHtml(node.label)}</text>
           ${deleteButton}
         </g>
         <g class="attachment-layer">${handles}</g>
@@ -654,7 +654,8 @@ function bindTreeDragHandlers() {
           const tree = getActiveTree();
           const node = findNode(tree, nodeId);
           if (node) {
-            requestPermanentConfirmation(`Delete "${node.label}"? This will remove the orb and all its connections.`).then(ok => {
+            const label = node.label || 'unnamed orb';
+            requestPermanentConfirmation(`Delete "${label}"? This will remove the orb and all its connections.`).then(ok => {
               if (ok) {
                 deleteNode(nodeId);
               }
@@ -695,6 +696,7 @@ function renderSpellInfoCard() {
     ? node.tags.map((tag) => `<span class="ability-tag">${escapeHtml(tag)}</span>`).join("")
     : '<span class="tag-empty">No tags</span>';
   const spellDescription = node.spellDescription || "No spell description yet.";
+  const damageDice = node.damageDice || "";
 
   spellInfoCard.innerHTML = `
     <div class="spell-info-header">
@@ -703,6 +705,7 @@ function renderSpellInfoCard() {
     </div>
     <div class="spell-info-meta">Tier ${node.tier + 1}</div>
     <div class="spell-info-kind">${escapeHtml(node.abilityKind || "Spell")}</div>
+    ${damageDice ? `<div class="spell-info-damage">Damage: ${escapeHtml(damageDice)}</div>` : ""}
     <p class="spell-info-description">${escapeHtml(spellDescription)}</p>
     <div class="spell-info-tags">
       <span class="tag-values">${tagsMarkup}</span>
@@ -980,16 +983,16 @@ abilityForm.addEventListener("submit", (event) => {
   const abilityKindRaw = String(formData.get("abilityKind") ?? "Spell").trim();
   const abilityKind = abilityKindRaw || "Spell";
   const spellDescription = String(formData.get("abilitySpellDescription") ?? "").trim();
-  const prereqs = Array.from(prereqSelect.selectedOptions ?? [])
-    .map((option) => option.value)
-    .filter(Boolean);
+  const damageDice = String(formData.get("abilityDamageDice") ?? "").trim();
+  const prereqValue = String(formData.get("abilityPrereq") ?? "").trim();
+  const prereqs = prereqValue ? [prereqValue] : [];
   const tags = [...selectedFormTags];
   const status = String(formData.get("abilityStatus") ?? "unlocked");
   const abilityType = String(formData.get("abilityType") ?? "Conventional");
 
   if (!label) return;
   if (prereqs.length < 1) {
-    window.alert("Choose at least 1 prerequisite.");
+    window.alert("Choose a prerequisite.");
     return;
   }
 
@@ -1018,6 +1021,7 @@ abilityForm.addEventListener("submit", (event) => {
     importance: boundedImportance,
     abilityKind,
     spellDescription,
+    damageDice,
     abilityType,
     unlocked,
     x: position.x,

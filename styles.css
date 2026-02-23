@@ -248,6 +248,12 @@ body {
   gap: 0.75rem;
 }
 
+.form-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 0.75rem;
+}
+
 .ability-form label {
   display: grid;
   gap: 0.35rem;
@@ -554,6 +560,12 @@ button.ghost {
 
 .delete-orb-btn:active {
   transform: scale(0.95);
+}
+
+.spell-info-damage {
+  color: var(--accent);
+  font-weight: 600;
+  margin: 0.25rem 0;
 }
 
 .tag-values {

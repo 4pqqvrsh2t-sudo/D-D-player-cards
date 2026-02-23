@@ -81,8 +81,8 @@
           </label>
 
           <label>
-            Prerequisites (choose at least 1)
-            <select id="abilityPrereq" name="abilityPrereq" multiple size="5" required>
+            Prerequisites
+            <select id="abilityPrereq" name="abilityPrereq" required>
             </select>
           </label>
 
@@ -95,10 +95,44 @@
             </select>
           </label>
 
-          <label class="description-field">
-            Spell description
-            <textarea id="abilitySpellDescription" name="abilitySpellDescription" rows="3" maxlength="240" placeholder="Describe what this spell does..."></textarea>
-          </label>
+          <div class="form-row">
+            <label class="description-field">
+              Spell description
+              <textarea id="abilitySpellDescription" name="abilitySpellDescription" rows="3" maxlength="240" placeholder="Describe what this spell does..."></textarea>
+            </label>
+
+            <label>
+              Damage Dice
+              <select id="abilityDamageDice" name="abilityDamageDice">
+                <option value="">None</option>
+                <option value="1d4">1d4</option>
+                <option value="1d6">1d6</option>
+                <option value="1d8">1d8</option>
+                <option value="1d10">1d10</option>
+                <option value="1d12">1d12</option>
+                <option value="2d4">2d4</option>
+                <option value="2d6">2d6</option>
+                <option value="2d8">2d8</option>
+                <option value="2d10">2d10</option>
+                <option value="2d12">2d12</option>
+                <option value="3d4">3d4</option>
+                <option value="3d6">3d6</option>
+                <option value="3d8">3d8</option>
+                <option value="3d10">3d10</option>
+                <option value="3d12">3d12</option>
+                <option value="4d4">4d4</option>
+                <option value="4d6">4d6</option>
+                <option value="4d8">4d8</option>
+                <option value="4d10">4d10</option>
+                <option value="4d12">4d12</option>
+                <option value="6d6">6d6</option>
+                <option value="8d6">8d6</option>
+                <option value="10d6">10d6</option>
+                <option value="12d6">12d6</option>
+                <option value="15d6">15d6</option>
+              </select>
+            </label>
+          </div>
 
           <div class="tag-picker-wrap" aria-label="Ability tags">
             <p class="tag-picker-title">Tags (invisible metadata)</p>
