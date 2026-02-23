@@ -105,6 +105,7 @@ let selectedInfoNodeId = null;
 let isFilterPanelOpen = false;
 let activeFilterMode = "none";
 let activeFilterValue = "";
+let isDoubleClick = false;
 
 const importanceToSize = {
   minor: 18,
@@ -574,6 +575,9 @@ function bindTreeDragHandlers() {
 
   svg.addEventListener("pointerdown", (event) => {
     if (!isEditMode) return;
+    
+    // Don't start drag if this is a double-click
+    if (isDoubleClick) return;
 
     const nodeCore = event.target.closest(".node-core");
     const attachment = event.target.closest(".attach-handle");
@@ -685,6 +689,12 @@ function bindTreeDragHandlers() {
     event.preventDefault();
     event.stopPropagation();
 
+    // Set flag to prevent drag
+    isDoubleClick = true;
+    setTimeout(() => {
+      isDoubleClick = false;
+    }, 300);
+
     const nodeId = nodeCore.dataset.nodeId;
     if (!nodeId) return;
 
@@ -693,7 +703,7 @@ function bindTreeDragHandlers() {
     if (!node) return;
 
     const label = node.label || 'unnamed orb';
-    requestPermanentConfirmation(`Delete "${label}"? This will remove the orb and all its connections.`).then(ok => {
+    requestPermanentConfirmation(`Delete "${label}"? This will remove orb and all its connections.`).then(ok => {
       if (ok) {
         deleteNode(nodeId);
       }
@@ -1133,6 +1143,7 @@ resetTreeButton.addEventListener("click", async () => {
 renderAll();
 renderEditButton();
 renderEditTabsButton();
+renderFilterPanel();
 
 if (abilityNameInput) {
   abilityNameInput.maxLength = ABILITY_NAME_MAX_LENGTH;

@@ -150,6 +150,10 @@ body {
   padding: 1rem;
 }
 
+[hidden] {
+  display: none;
+}
+
 .confirm-overlay[hidden] {
   display: none;
 }
