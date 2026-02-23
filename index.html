@@ -49,6 +49,7 @@
         </div>
         <div id="treeCanvas"></div>
         <div id="spellInfoCard" class="spell-info-card" hidden></div>
+        <div id="doubleClickTooltip" class="double-click-tooltip" hidden>Double-click to delete this orb</div>
       </section>
 
       <section class="panel">
@@ -81,8 +82,8 @@
           </label>
 
           <label>
-            Prerequisites
-            <select id="abilityPrereq" name="abilityPrereq" required>
+            Prerequisites (choose at least 1)
+            <select id="abilityPrereq" name="abilityPrereq" multiple required>
             </select>
           </label>
 

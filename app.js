@@ -94,6 +94,7 @@ const confirmYesButton = document.querySelector("#confirmYes");
 const confirmNoButton = document.querySelector("#confirmNo");
 const confirmMessage = document.querySelector("#confirmMessage");
 const spellInfoCard = document.querySelector("#spellInfoCard");
+const doubleClickTooltip = document.querySelector("#doubleClickTooltip");
 const abilityNameInput = document.querySelector("#abilityName");
 
 let selectedFormTags = new Set();
@@ -674,6 +675,53 @@ function bindTreeDragHandlers() {
     selectedInfoNodeId = nodeId;
     renderSpellInfoCard();
   });
+
+  svg.addEventListener("dblclick", (event) => {
+    if (!isEditMode) return;
+    
+    const nodeCore = event.target.closest(".node-core");
+    if (!nodeCore) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const nodeId = nodeCore.dataset.nodeId;
+    if (!nodeId) return;
+
+    const tree = getActiveTree();
+    const node = findNode(tree, nodeId);
+    if (!node) return;
+
+    const label = node.label || 'unnamed orb';
+    requestPermanentConfirmation(`Delete "${label}"? This will remove the orb and all its connections.`).then(ok => {
+      if (ok) {
+        deleteNode(nodeId);
+      }
+    });
+  });
+
+  // Add hover functionality for tooltip in edit mode
+  svg.addEventListener("mouseover", (event) => {
+    if (!isEditMode) return;
+    
+    const nodeCore = event.target.closest(".node-core");
+    if (!nodeCore) return;
+
+    if (doubleClickTooltip) {
+      doubleClickTooltip.hidden = false;
+    }
+  });
+
+  svg.addEventListener("mouseout", (event) => {
+    if (!isEditMode) return;
+    
+    const nodeCore = event.target.closest(".node-core");
+    if (!nodeCore) return;
+
+    if (doubleClickTooltip) {
+      doubleClickTooltip.hidden = true;
+    }
+  });
 }
 
 function renderSpellInfoCard() {
@@ -984,15 +1032,16 @@ abilityForm.addEventListener("submit", (event) => {
   const abilityKind = abilityKindRaw || "Spell";
   const spellDescription = String(formData.get("abilitySpellDescription") ?? "").trim();
   const damageDice = String(formData.get("abilityDamageDice") ?? "").trim();
-  const prereqValue = String(formData.get("abilityPrereq") ?? "").trim();
-  const prereqs = prereqValue ? [prereqValue] : [];
+  const prereqs = Array.from(prereqSelect.selectedOptions ?? [])
+    .map((option) => option.value)
+    .filter(Boolean);
   const tags = [...selectedFormTags];
   const status = String(formData.get("abilityStatus") ?? "unlocked");
   const abilityType = String(formData.get("abilityType") ?? "Conventional");
 
   if (!label) return;
   if (prereqs.length < 1) {
-    window.alert("Choose a prerequisite.");
+    window.alert("Choose at least 1 prerequisite.");
     return;
   }
 
