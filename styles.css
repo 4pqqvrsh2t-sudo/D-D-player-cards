@@ -520,6 +520,42 @@ button.ghost {
   cursor: grabbing;
 }
 
+.delete-orb-btn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid rgba(220, 86, 86, 0.8);
+  background: rgba(220, 86, 86, 0.9);
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  transition: all 0.2s ease;
+}
+
+.tree-wrap.is-editing .delete-orb-btn {
+  display: flex;
+}
+
+.delete-orb-btn:hover {
+  background: rgba(255, 100, 100, 0.95);
+  border-color: rgba(255, 100, 100, 1);
+  transform: scale(1.1);
+}
+
+.delete-orb-btn:active {
+  transform: scale(0.95);
+}
+
 .tag-values {
   display: inline-flex;
   gap: 0.35rem;

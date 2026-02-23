@@ -475,12 +475,17 @@ function createTreeMarkup(tree) {
       const handles = node.attachments
         .map((point, index) => `<circle class="attach-handle" data-node-id="${node.id}" data-attachment-index="${index}" cx="${node.x + point.dx}" cy="${node.y + point.dy}" r="${handleRadius}"></circle>`)
         .join("");
+      
+      const deleteButton = isEditMode 
+        ? `<button class="delete-orb-btn" data-node-id="${node.id}" aria-label="Delete ${node.label}">×</button>`
+        : "";
 
       return `
       <g class="node-layer" data-node-id="${node.id}">
         <g class="node-core ${stateClass} ${typeClass} ${filterClass}" data-node-id="${node.id}" transform="translate(${node.x}, ${node.y})">
           <circle r="${node.size ?? 22}"></circle>
           <text y="4" text-anchor="middle">${node.label}</text>
+          ${deleteButton}
         </g>
         <g class="attachment-layer">${handles}</g>
       </g>`;
@@ -542,6 +547,24 @@ function getSvgCoordinates(svg, clientX, clientY) {
   point.x = clientX;
   point.y = clientY;
   return point.matrixTransform(svg.getScreenCTM().inverse());
+}
+
+function deleteNode(nodeId) {
+  const tree = getActiveTree();
+  const node = findNode(tree, nodeId);
+  if (!node) return;
+
+  // Remove all links to and from this node
+  tree.links = tree.links.filter(link => link.from !== nodeId && link.to !== nodeId);
+
+  // Remove the node
+  const nodeIndex = tree.nodes.findIndex(n => n.id === nodeId);
+  if (nodeIndex !== -1) {
+    tree.nodes.splice(nodeIndex, 1);
+  }
+
+  saveState();
+  renderAll();
 }
 
 function bindTreeDragHandlers() {
@@ -621,7 +644,27 @@ function bindTreeDragHandlers() {
   svg.addEventListener("pointercancel", finishDrag);
 
   svg.addEventListener("click", (event) => {
-    if (isEditMode) return;
+    if (isEditMode) {
+      const deleteButton = event.target.closest(".delete-orb-btn");
+      if (deleteButton) {
+        event.preventDefault();
+        event.stopPropagation();
+        const nodeId = deleteButton.dataset.nodeId;
+        if (nodeId) {
+          const tree = getActiveTree();
+          const node = findNode(tree, nodeId);
+          if (node) {
+            requestPermanentConfirmation(`Delete "${node.label}"? This will remove the orb and all its connections.`).then(ok => {
+              if (ok) {
+                deleteNode(nodeId);
+              }
+            });
+          }
+        }
+        return;
+      }
+    }
+    
     const nodeCore = event.target.closest(".node-core");
     if (!nodeCore) return;
 
