@@ -1,423 +1,1131 @@
-const players = [
-  {
-    name: "Aelar Dawnwhisper",
-    classLevel: "High Elf Wizard (Level 5)",
-    hook: "Arcane strategist focused on battlefield control and utility magic.",
-    race: "High Elf",
-    background: "Sage",
-    stats: {
-      STR: 8,
-      DEX: 14,
-      CON: 13,
-      INT: 18,
-      WIS: 12,
-      CHA: 10
-    },
-    canDo: [
-      "Recover spell slots on short rest (Arcane Recovery)",
-      "Ritual cast known rituals without using spell slots",
-      "Use Portent-style prep notes for planned encounters"
+const builtInTreeTemplates = {
+  tank: {
+    label: "Tank",
+    nodes: [
+      { id: "brace", label: "Brace", tier: 0, size: 22, unlocked: true, x: 260, y: 72 },
+      { id: "taunt", label: "Taunt", tier: 0, size: 20, unlocked: true, x: 520, y: 72 },
+      { id: "fortify", label: "Fortify", tier: 1, size: 24, unlocked: true, x: 390, y: 156 },
+      { id: "bulwark", label: "Bulwark", tier: 2, size: 24, unlocked: false, x: 390, y: 240 },
+      { id: "immovable", label: "Immovable", tier: 3, size: 28, unlocked: false, x: 390, y: 324 }
     ],
-    cantDo: [
-      "Cannot wear heavy armor effectively",
-      "Low melee durability—avoid front line"
-    ],
-    inventory: [
-      { name: "Spellbook", image: createItemIcon("📘", "#3b4c7a") },
-      { name: "Arcane Crystal", image: createItemIcon("🔮", "#563f8f") },
-      { name: "Mana Potion", image: createItemIcon("🧪", "#2f6d6a") },
-      { name: "Traveler's Cloak", image: createItemIcon("🧥", "#5d4a3d") }
-    ],
-    spellWeb: {
-      // NOTE FOR CUSTOMIZATION:
-      // - `links` controls which nodes connect ("strings" in the web).
-      // - Add/remove entries in `links` to decide exactly how many strings each node has.
-      // - Example: { from: "spark", to: "arcane-burst" } attaches spark -> arcane-burst.
-      // - Keep the top 4 nodes as "solo starters" (no incoming links) if you want them as base spells.
-      // - `size` controls orb radius (bigger means more important).
-      // - `unlocked: false` greys out a spell orb.
-      nodes: [
-        { id: "spark", label: "Spark", tier: 0, size: 22, unlocked: true },
-        { id: "ward", label: "Ward", tier: 0, size: 20, unlocked: true },
-        { id: "focus", label: "Focus", tier: 0, size: 20, unlocked: true },
-        { id: "flare", label: "Flare", tier: 0, size: 20, unlocked: true },
-        { id: "arcane-burst", label: "Arcane Burst", tier: 1, size: 24, unlocked: true },
-        { id: "runic-step", label: "Runic Step", tier: 1, size: 20, unlocked: true },
-        { id: "mirror-veil", label: "Mirror Veil", tier: 1, size: 20, unlocked: false },
-        { id: "spell-chain", label: "Spell Chain", tier: 2, size: 24, unlocked: false },
-        { id: "mana-weave", label: "Mana Weave", tier: 2, size: 22, unlocked: false },
-        { id: "starfall", label: "Starfall", tier: 3, size: 28, unlocked: false }
-      ],
-      links: [
-        { from: "spark", to: "arcane-burst" },
-        { from: "ward", to: "runic-step" },
-        { from: "focus", to: "mirror-veil" },
-        { from: "flare", to: "arcane-burst" },
-        { from: "arcane-burst", to: "spell-chain" },
-        { from: "runic-step", to: "spell-chain" },
-        { from: "runic-step", to: "mana-weave" },
-        { from: "mirror-veil", to: "mana-weave" },
-        { from: "spell-chain", to: "starfall" },
-        { from: "mana-weave", to: "starfall" }
-      ]
-    }
+    links: [
+      { from: "brace", to: "fortify" },
+      { from: "taunt", to: "fortify" },
+      { from: "fortify", to: "bulwark" },
+      { from: "bulwark", to: "immovable" }
+    ]
   },
-  {
-    name: "Korga Stoneheart",
-    classLevel: "Mountain Dwarf Cleric (Level 4)",
-    hook: "Frontline support that keeps the party alive and stubborn.",
-    race: "Mountain Dwarf",
-    background: "Soldier",
-    stats: {
-      STR: 15,
-      DEX: 10,
-      CON: 16,
-      INT: 9,
-      WIS: 17,
-      CHA: 11
-    },
-    canDo: [
-      "Turn Undead in divine radius",
-      "Channel Divinity to boost healing output",
-      "Use medium/heavy armor and shield"
+  longRange: {
+    label: "Long Range",
+    nodes: [
+      { id: "focus-shot", label: "Focus Shot", tier: 0, size: 22, unlocked: true, x: 260, y: 72 },
+      { id: "steady-aim", label: "Steady Aim", tier: 0, size: 20, unlocked: true, x: 520, y: 72 },
+      { id: "piercing-bolt", label: "Piercing Bolt", tier: 1, size: 24, unlocked: true, x: 390, y: 156 },
+      { id: "hawk-eye", label: "Hawk Eye", tier: 2, size: 22, unlocked: false, x: 390, y: 240 },
+      { id: "meteor-volley", label: "Meteor Volley", tier: 3, size: 28, unlocked: false, x: 390, y: 324 }
     ],
-    cantDo: [
-      "Limited ranged damage options",
-      "Spell slots burn quickly in long dungeons"
-    ],
-    inventory: [
-      { name: "Warhammer", image: createItemIcon("🔨", "#4a4f58") },
-      { name: "Holy Symbol", image: createItemIcon("✶", "#6e5a2f") },
-      { name: "Shield", image: createItemIcon("🛡", "#4e5f74") },
-      { name: "Bandages", image: createItemIcon("🩹", "#7a5947") }
-    ],
-    spellWeb: {
-      nodes: [
-        { id: "prayer", label: "Prayer", tier: 0, size: 20, unlocked: true },
-        { id: "light", label: "Light", tier: 0, size: 20, unlocked: true },
-        { id: "vow", label: "Vow", tier: 0, size: 20, unlocked: true },
-        { id: "grace", label: "Grace", tier: 0, size: 20, unlocked: true },
-        { id: "healing-word", label: "Healing Word", tier: 1, size: 24, unlocked: true },
-        { id: "bless", label: "Bless", tier: 1, size: 22, unlocked: true },
-        { id: "warding-bond", label: "Warding Bond", tier: 2, size: 22, unlocked: false },
-        { id: "spirit-weapon", label: "Spirit Weapon", tier: 2, size: 24, unlocked: false },
-        { id: "divine-beacon", label: "Divine Beacon", tier: 3, size: 28, unlocked: false }
-      ],
-      links: [
-        { from: "prayer", to: "healing-word" },
-        { from: "light", to: "bless" },
-        { from: "vow", to: "warding-bond" },
-        { from: "grace", to: "healing-word" },
-        { from: "healing-word", to: "warding-bond" },
-        { from: "bless", to: "spirit-weapon" },
-        { from: "warding-bond", to: "divine-beacon" },
-        { from: "spirit-weapon", to: "divine-beacon" }
-      ]
-    }
+    links: [
+      { from: "focus-shot", to: "piercing-bolt" },
+      { from: "steady-aim", to: "piercing-bolt" },
+      { from: "piercing-bolt", to: "hawk-eye" },
+      { from: "hawk-eye", to: "meteor-volley" }
+    ]
   },
-  {
-    name: "Nyx Quickstep",
-    classLevel: "Lightfoot Halfling Rogue (Level 5)",
-    hook: "Scout and objective specialist with burst sneak damage.",
-    race: "Lightfoot Halfling",
-    background: "Criminal",
-    stats: {
-      STR: 9,
-      DEX: 19,
-      CON: 12,
-      INT: 14,
-      WIS: 13,
-      CHA: 12
-    },
-    canDo: [
-      "Cunning Action every turn",
-      "Sneak Attack with advantage or ally adjacency",
-      "Expertise in Stealth and Thieves' Tools"
+  support: {
+    label: "Support",
+    nodes: [
+      { id: "mend", label: "Mend", tier: 0, size: 22, unlocked: true, x: 260, y: 72 },
+      { id: "ward-song", label: "Ward Song", tier: 0, size: 20, unlocked: true, x: 520, y: 72 },
+      { id: "blessing-wave", label: "Blessing Wave", tier: 1, size: 24, unlocked: true, x: 390, y: 156 },
+      { id: "aegis-link", label: "Aegis Link", tier: 2, size: 22, unlocked: false, x: 390, y: 240 },
+      { id: "divine-choir", label: "Divine Choir", tier: 3, size: 28, unlocked: false, x: 390, y: 324 }
     ],
-    cantDo: [
-      "No true spellcasting progression",
-      "Vulnerable when cornered in melee"
-    ],
-    inventory: [
-      { name: "Lockpicks", image: createItemIcon("🗝", "#545a63") },
-      { name: "Smoke Bomb", image: createItemIcon("💨", "#4b4b56") },
-      { name: "Dagger", image: createItemIcon("🗡", "#505866") },
-      { name: "Map Fragments", image: createItemIcon("🗺", "#68583c") }
-    ],
-    spellWeb: {
-      nodes: [
-        { id: "step", label: "Step", tier: 0, size: 20, unlocked: true },
-        { id: "mark", label: "Mark", tier: 0, size: 20, unlocked: true },
-        { id: "fade", label: "Fade", tier: 0, size: 20, unlocked: true },
-        { id: "scan", label: "Scan", tier: 0, size: 20, unlocked: true },
-        { id: "shadow-hop", label: "Shadow Hop", tier: 1, size: 23, unlocked: true },
-        { id: "weak-spot", label: "Weak Spot", tier: 1, size: 23, unlocked: true },
-        { id: "silent-net", label: "Silent Net", tier: 2, size: 24, unlocked: false },
-        { id: "finisher", label: "Finisher", tier: 3, size: 28, unlocked: false }
-      ],
-      links: [
-        { from: "step", to: "shadow-hop" },
-        { from: "mark", to: "weak-spot" },
-        { from: "fade", to: "shadow-hop" },
-        { from: "scan", to: "weak-spot" },
-        { from: "shadow-hop", to: "silent-net" },
-        { from: "weak-spot", to: "silent-net" },
-        { from: "silent-net", to: "finisher" }
-      ]
-    }
+    links: [
+      { from: "mend", to: "blessing-wave" },
+      { from: "ward-song", to: "blessing-wave" },
+      { from: "blessing-wave", to: "aegis-link" },
+      { from: "aegis-link", to: "divine-choir" }
+    ]
   }
+};
+
+const SVG_WIDTH = 900;
+const SVG_HEIGHT = 430;
+const storageKey = "dnd-campaign-ability-trees-by-tab";
+const templateStorageKey = "dnd-campaign-tab-templates";
+const activeTabKeyStorage = "dnd-campaign-active-tab";
+const tagStorageKey = "dnd-campaign-available-tags";
+const defaultAvailableTags = [
+  "Magic",
+  "Magic dmg.",
+  "Physical dmg.",
+  "Heal",
+  "Shield",
+  "Buff",
+  "Debuff",
+  "Crowd Control",
+  "AOE",
+  "Single Target",
+  "Mobility",
+  "Summon"
 ];
 
-const grid = document.querySelector("#cardGrid");
-const cardTemplate = document.querySelector("#cardTemplate");
-const detailPanel = document.querySelector("#detailPanel");
-const detailContent = document.querySelector("#detailContent");
-const closeDetail = document.querySelector("#closeDetail");
+const ABILITY_NAME_MAX_LENGTH = 32;
 
-let activeIndex = null;
-let transitioning = false;
+const AURA_BOUNDS_PADDING = 26;
 
-function renderCards() {
-  players.forEach((player, index) => {
-    player.index = index;
-    const node = cardTemplate.content.cloneNode(true);
-    const card = node.querySelector(".player-card");
+const treeCanvas = document.querySelector("#treeCanvas");
+const prereqSelect = document.querySelector("#abilityPrereq");
+const abilityForm = document.querySelector("#abilityForm");
+const resetTreeButton = document.querySelector("#resetTree");
+const tabBar = document.querySelector("#tabBar");
+const treeTitle = document.querySelector("#treeTitle");
+const tagPicker = document.querySelector("#tagPicker");
+const clearTagsButton = document.querySelector("#clearTags");
+const editWebButton = document.querySelector("#editWebButton");
+const filterWebButton = document.querySelector("#filterWebButton");
+const filterPanel = document.querySelector("#filterPanel");
+const filterModeSelect = document.querySelector("#filterMode");
+const filterValueSelect = document.querySelector("#filterValue");
+const clearFilterButton = document.querySelector("#clearFilter");
+const editTabsButton = document.querySelector("#editTabsButton");
+const confirmOverlay = document.querySelector("#confirmOverlay");
+const confirmYesButton = document.querySelector("#confirmYes");
+const confirmNoButton = document.querySelector("#confirmNo");
+const confirmMessage = document.querySelector("#confirmMessage");
+const spellInfoCard = document.querySelector("#spellInfoCard");
+const abilityNameInput = document.querySelector("#abilityName");
 
-    node.querySelector(".character-name").textContent = player.name;
-    node.querySelector(".character-meta").textContent = player.classLevel;
-    node.querySelector(".card-hook").textContent = player.hook;
+let selectedFormTags = new Set();
+let availableTags = [];
+let isEditMode = false;
+let isTabEditMode = false;
+let selectedInfoNodeId = null;
+let isFilterPanelOpen = false;
+let activeFilterMode = "none";
+let activeFilterValue = "";
 
-    card.dataset.index = index;
+const importanceToSize = {
+  minor: 18,
+  base: 22,
+  major: 27,
+  main: 32
+};
 
-    card.addEventListener("click", () => focusCard(index));
-    card.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        focusCard(index);
+function sizeFromImportance(importance) {
+  return importanceToSize[importance] ?? importanceToSize.base;
+}
+
+function importanceFromSize(size) {
+  const numericSize = Number(size);
+  if (Number.isNaN(numericSize)) return "base";
+  const entries = Object.entries(importanceToSize);
+  let best = entries[0][0];
+  let bestDiff = Number.POSITIVE_INFINITY;
+
+  entries.forEach(([importance, mappedSize]) => {
+    const diff = Math.abs(mappedSize - numericSize);
+    if (diff < bestDiff) {
+      best = importance;
+      bestDiff = diff;
+    }
+  });
+
+  return best;
+}
+
+function nodeRadius(node) {
+  return Math.max(8, Number(node?.size) || 22);
+}
+
+function clampNodePositionToBounds(node, x, y) {
+  const radius = nodeRadius(node) + AURA_BOUNDS_PADDING;
+  return {
+    x: Math.max(radius, Math.min(SVG_WIDTH - radius, Math.round(x))),
+    y: Math.max(radius, Math.min(SVG_HEIGHT - radius, Math.round(y)))
+  };
+}
+
+function nodeOverlapsAtPosition(nodeA, xA, yA, nodeB, xB = nodeB.x, yB = nodeB.y) {
+  const minDistance = nodeRadius(nodeA) + nodeRadius(nodeB) + 4;
+  return Math.hypot(xA - xB, yA - yB) < minDistance;
+}
+
+function overlapsAnyNode(tree, movingNode, x, y) {
+  return tree.nodes.some((other) => other.id !== movingNode.id && nodeOverlapsAtPosition(movingNode, x, y, other));
+}
+
+function findNonOverlappingPosition(tree, movingNode, preferredX, preferredY) {
+  const preferred = clampNodePositionToBounds(movingNode, preferredX, preferredY);
+  if (!overlapsAnyNode(tree, movingNode, preferred.x, preferred.y)) {
+    return preferred;
+  }
+
+  for (let radius = 18; radius <= 320; radius += 18) {
+    for (let step = 0; step < 24; step += 1) {
+      const angle = (Math.PI * 2 * step) / 24;
+      const candidateX = preferred.x + Math.cos(angle) * radius;
+      const candidateY = preferred.y + Math.sin(angle) * radius;
+      const candidate = clampNodePositionToBounds(movingNode, candidateX, candidateY);
+      if (!overlapsAnyNode(tree, movingNode, candidate.x, candidate.y)) {
+        return candidate;
       }
+    }
+  }
+
+  return preferred;
+}
+
+function loadAvailableTags() {
+  const saved = localStorage.getItem(tagStorageKey);
+  const base = [...defaultAvailableTags];
+  if (!saved) return base;
+
+  try {
+    const parsed = JSON.parse(saved);
+    const parsedTags = Array.isArray(parsed)
+      ? parsed.map((tag) => String(tag).trim()).filter(Boolean)
+      : [];
+    return parseTags([...base, ...parsedTags].join(","));
+  } catch {
+    return base;
+  }
+}
+
+availableTags = loadAvailableTags();
+
+function attachmentRadius(nodeOrSize) {
+  const size = typeof nodeOrSize === "number" ? nodeOrSize : (nodeOrSize?.size ?? 22);
+  return Math.max(8, size + 1);
+}
+
+function clampAttachmentToOrb(node, dx, dy) {
+  const radius = attachmentRadius(node);
+  const length = Math.hypot(dx, dy) || 1;
+  return {
+    dx: Math.round((dx / length) * radius),
+    dy: Math.round((dy / length) * radius)
+  };
+}
+
+function defaultAttachments(size) {
+  const radius = attachmentRadius(size);
+  return Array.from({ length: 8 }, (_, index) => {
+    const angle = (Math.PI * 2 * index) / 8;
+    return {
+      dx: Math.round(Math.cos(angle) * radius),
+      dy: Math.round(Math.sin(angle) * radius)
+    };
+  });
+}
+
+function cloneTree(tree) {
+  return {
+    nodes: tree.nodes.map((node) => ({
+      ...node,
+      attachments: (node.attachments ?? defaultAttachments(node.size)).map((pt) => ({ ...pt }))
+    })),
+    links: tree.links.map((link) => ({ ...link }))
+  };
+}
+
+function toSlug(value) {
+  return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "ability";
+}
+
+function parseTags(raw) {
+  return String(raw ?? "")
+    .split(",")
+    .map((tag) => tag.trim())
+    .filter(Boolean)
+    .filter((tag, index, all) => all.findIndex((t) => t.toLowerCase() === tag.toLowerCase()) === index);
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function loadTemplates() {
+  const templates = Object.fromEntries(
+    Object.entries(builtInTreeTemplates).map(([key, template]) => [key, cloneTree({ ...template })])
+  );
+
+  const saved = localStorage.getItem(templateStorageKey);
+  if (!saved) return templates;
+
+  try {
+    const parsed = JSON.parse(saved);
+    Object.entries(parsed).forEach(([key, template]) => {
+      if (!template || typeof template.label !== "string") return;
+      if (!Array.isArray(template.nodes) || template.nodes.length < 1) return;
+      if (!Array.isArray(template.links)) return;
+      templates[key] = cloneTree(template);
+      templates[key].label = template.label;
     });
+  } catch {
+    return templates;
+  }
 
-    grid.appendChild(node);
+  return templates;
+}
+
+let treeTemplates = loadTemplates();
+
+function buildDefaultTreesFromTemplates() {
+  return Object.fromEntries(Object.entries(treeTemplates).map(([key, template]) => [key, cloneTree(template)]));
+}
+
+function normalizeTree(tree) {
+  tree.nodes.forEach((node) => {
+    if (typeof node.x !== "number") node.x = Math.round(SVG_WIDTH / 2);
+    if (typeof node.y !== "number") node.y = 52 + (node.tier ?? 0) * 84;
+    if (!Array.isArray(node.attachments) || node.attachments.length !== 8) {
+      node.attachments = defaultAttachments(node.size);
+    } else {
+      node.attachments = node.attachments.map((pt) => clampAttachmentToOrb(node, pt.dx ?? 0, pt.dy ?? 0));
+    }
+    node.tags = parseTags(Array.isArray(node.tags) ? node.tags.join(",") : "");
+    node.importance = typeof node.importance === "string" ? node.importance : importanceFromSize(node.size);
+    node.abilityKind = typeof node.abilityKind === "string" && node.abilityKind.trim() ? node.abilityKind.trim() : "Spell";
+    node.spellDescription = typeof node.spellDescription === "string" ? node.spellDescription.trim() : "";
+    node.abilityType = node.abilityType === "Unconventional" || node.abilityType === "Forbidden" ? node.abilityType : "Conventional";
+    if (Number(node.tier) === 0) {
+      node.unlocked = true;
+    }
+
+    const bounded = clampNodePositionToBounds(node, node.x, node.y);
+    node.x = bounded.x;
+    node.y = bounded.y;
   });
-}
 
-function toList(items, className) {
-  return `<ul class="${className}">${items.map((item) => `<li>${item}</li>`).join("")}</ul>`;
-}
-
-function createItemIcon(symbol, background) {
-  const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">
-      <defs>
-        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="${background}"/>
-          <stop offset="100%" stop-color="#1f2438"/>
-        </linearGradient>
-      </defs>
-      <rect x="2" y="2" width="116" height="116" rx="16" fill="url(#bg)" stroke="#d7b77a" stroke-opacity="0.45"/>
-      <text x="50%" y="57%" text-anchor="middle" font-size="46">${symbol}</text>
-    </svg>
-  `;
-  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
-}
-
-function layoutSpellWeb(spellWeb) {
-  const width = 860;
-  const height = 340;
-  const tierGap = 95;
-
-  const tiers = new Map();
-  spellWeb.nodes.forEach((node) => {
-    if (!tiers.has(node.tier)) tiers.set(node.tier, []);
-    tiers.get(node.tier).push(node);
+  tree.nodes.forEach((node) => {
+    const adjusted = findNonOverlappingPosition(tree, node, node.x, node.y);
+    node.x = adjusted.x;
+    node.y = adjusted.y;
   });
 
-  const positioned = new Map();
-  [...tiers.keys()].sort((a, b) => a - b).forEach((tier) => {
-    const nodes = tiers.get(tier);
-    const rowY = 55 + tier * tierGap;
-    const gap = width / (nodes.length + 1);
-
-    nodes.forEach((node, idx) => {
-      positioned.set(node.id, {
-        ...node,
-        x: Math.round((idx + 1) * gap),
-        y: rowY
-      });
+  if (tree.nodes.length === 0) {
+    tree.nodes.push({
+      id: "core-ability",
+      label: "Core Ability",
+      tier: 0,
+      size: 22,
+      unlocked: true,
+      x: 390,
+      y: 156,
+      attachments: defaultAttachments(22),
+      tags: []
     });
-  });
+  }
+}
 
-  const linkSvg = spellWeb.links
+const savedTrees = localStorage.getItem(storageKey);
+const treesByTab = savedTrees ? JSON.parse(savedTrees) : buildDefaultTreesFromTemplates();
+
+Object.entries(treeTemplates).forEach(([key, template]) => {
+  if (!treesByTab[key]) treesByTab[key] = cloneTree(template);
+});
+Object.values(treesByTab).forEach(normalizeTree);
+
+let activeTab = localStorage.getItem(activeTabKeyStorage) || "tank";
+if (!treeTemplates[activeTab]) {
+  activeTab = Object.keys(treeTemplates)[0] ?? "tank";
+}
+
+let dragState = null;
+
+function getActiveTree() {
+  return treesByTab[activeTab];
+}
+
+function saveState() {
+  localStorage.setItem(storageKey, JSON.stringify(treesByTab));
+  localStorage.setItem(templateStorageKey, JSON.stringify(treeTemplates));
+  localStorage.setItem(activeTabKeyStorage, activeTab);
+  localStorage.setItem(tagStorageKey, JSON.stringify(availableTags));
+}
+
+function findNode(tree, nodeId) {
+  return tree.nodes.find((node) => node.id === nodeId);
+}
+
+function attachmentPosition(node, index) {
+  const point = node.attachments[index] ?? { dx: 0, dy: 0 };
+  return { x: node.x + point.dx, y: node.y + point.dy };
+}
+
+function nearestAttachmentIndex(node, targetX, targetY) {
+  let bestIndex = 0;
+  let bestDistance = Number.POSITIVE_INFINITY;
+
+  for (let i = 0; i < 8; i += 1) {
+    const point = attachmentPosition(node, i);
+    const distance = Math.hypot(point.x - targetX, point.y - targetY);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      bestIndex = i;
+    }
+  }
+
+  return bestIndex;
+}
+
+function ensureLinkAttachmentIndices(tree) {
+  tree.links.forEach((link) => {
+    const fromNode = findNode(tree, link.from);
+    const toNode = findNode(tree, link.to);
+    if (!fromNode || !toNode) return;
+
+    if (typeof link.fromAttachment !== "number") {
+      link.fromAttachment = nearestAttachmentIndex(fromNode, toNode.x, toNode.y);
+    }
+    if (typeof link.toAttachment !== "number") {
+      link.toAttachment = nearestAttachmentIndex(toNode, fromNode.x, fromNode.y);
+    }
+  });
+}
+
+function nodeMatchesActiveFilter(node) {
+  if (activeFilterMode === "none" || !activeFilterValue) return true;
+
+  if (activeFilterMode === "descriptionType") {
+    return (node.abilityKind ?? "Spell") === activeFilterValue;
+  }
+
+  if (activeFilterMode === "tag") {
+    return Array.isArray(node.tags) && node.tags.some((tag) => tag.toLowerCase() === activeFilterValue.toLowerCase());
+  }
+
+  return true;
+}
+
+function getFilterValues(mode) {
+  const tree = getActiveTree();
+  if (!tree) return [];
+
+  if (mode === "descriptionType") {
+    return [...new Set(tree.nodes.map((node) => node.abilityKind || "Spell"))].sort((a, b) => a.localeCompare(b));
+  }
+
+  if (mode === "tag") {
+    return [...new Set(tree.nodes.flatMap((node) => (Array.isArray(node.tags) ? node.tags : [])))].sort((a, b) => a.localeCompare(b));
+  }
+
+  return [];
+}
+
+function renderFilterPanel() {
+  if (!filterPanel || !filterWebButton || !filterModeSelect || !filterValueSelect) return;
+
+  filterPanel.hidden = !isFilterPanelOpen;
+  filterWebButton.classList.toggle("is-active", isFilterPanelOpen);
+  filterWebButton.setAttribute("aria-pressed", isFilterPanelOpen ? "true" : "false");
+
+  filterModeSelect.value = activeFilterMode;
+  const values = getFilterValues(activeFilterMode);
+  const options = values.map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`).join("");
+
+  if (activeFilterMode === "none") {
+    filterValueSelect.disabled = true;
+    filterValueSelect.innerHTML = '<option value="">Select a filter</option>';
+    activeFilterValue = "";
+    return;
+  }
+
+  if (values.length === 0) {
+    filterValueSelect.disabled = true;
+    filterValueSelect.innerHTML = '<option value="">No values available</option>';
+    activeFilterValue = "";
+    return;
+  }
+
+  filterValueSelect.disabled = false;
+  filterValueSelect.innerHTML = options;
+  if (!values.includes(activeFilterValue)) {
+    activeFilterValue = values[0];
+  }
+  filterValueSelect.value = activeFilterValue;
+}
+
+function createTreeMarkup(tree) {
+  ensureLinkAttachmentIndices(tree);
+
+  const links = tree.links
     .map((link, index) => {
-      const from = positioned.get(link.from);
-      const to = positioned.get(link.to);
-      if (!from || !to) return "";
-
-      const dx = to.x - from.x;
-      const dy = to.y - from.y;
-      const length = Math.hypot(dx, dy) || 1;
-      const nx = -dy / length;
-      const ny = dx / length;
-      const drift = 9 + (index % 3) * 4;
-      const midX = (from.x + to.x) / 2;
-      const midY = (from.y + to.y) / 2;
-
-      const wisp1Cx = Math.round(midX + nx * drift);
-      const wisp1Cy = Math.round(midY + ny * drift);
-      const wisp2Cx = Math.round(midX - nx * (drift * 0.7));
-      const wisp2Cy = Math.round(midY - ny * (drift * 0.7));
-
-      return `
-        <g class="web-link-group" style="--wisp-delay:${(index * 0.32).toFixed(2)}s">
-          <line x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}" class="web-link-main" />
-          <path d="M ${from.x} ${from.y} Q ${wisp1Cx} ${wisp1Cy} ${to.x} ${to.y}" class="web-link-wisp wisp-a" />
-          <path d="M ${from.x} ${from.y} Q ${wisp2Cx} ${wisp2Cy} ${to.x} ${to.y}" class="web-link-wisp wisp-b" />
-        </g>`;
+      const fromNode = findNode(tree, link.from);
+      const toNode = findNode(tree, link.to);
+      if (!fromNode || !toNode) return "";
+      const fromPoint = attachmentPosition(fromNode, link.fromAttachment);
+      const toPoint = attachmentPosition(toNode, link.toAttachment);
+      return `<line data-link-index="${index}" x1="${fromPoint.x}" y1="${fromPoint.y}" x2="${toPoint.x}" y2="${toPoint.y}" class="web-link"/>`;
     })
     .join("");
 
-  const nodeSvg = [...positioned.values()]
+  const nodes = tree.nodes
     .map((node) => {
-      const radius = node.size ?? 20;
-      const labelY = Math.min(5, Math.max(3, radius * 0.18));
-      const stateClass = node.unlocked === false ? "locked" : "unlocked";
+      const stateClass = node.unlocked ? "on" : "off";
+      const typeClass = node.abilityType === "Forbidden" ? "forbidden" : "";
+      const filterClass = nodeMatchesActiveFilter(node) ? "" : "filtered-out";
+      const handleRadius = isEditMode ? 4 : 2;
+      const handles = node.attachments
+        .map((point, index) => `<circle class="attach-handle" data-node-id="${node.id}" data-attachment-index="${index}" cx="${node.x + point.dx}" cy="${node.y + point.dy}" r="${handleRadius}"></circle>`)
+        .join("");
+
       return `
-      <g class="web-node ${stateClass}" transform="translate(${node.x}, ${node.y})" tabindex="0" role="img" aria-label="${node.label} ${stateClass}">
-        <circle r="${radius}"></circle>
-        <text y="${labelY}" text-anchor="middle">${node.label}</text>
+      <g class="node-layer" data-node-id="${node.id}">
+        <g class="node-core ${stateClass} ${typeClass} ${filterClass}" data-node-id="${node.id}" transform="translate(${node.x}, ${node.y})">
+          <circle r="${node.size ?? 22}"></circle>
+          <text y="4" text-anchor="middle">${node.label}</text>
+        </g>
+        <g class="attachment-layer">${handles}</g>
       </g>`;
     })
     .join("");
 
-  return `
-    <div class="spell-web-wrap">
-      <svg viewBox="0 0 ${width} ${height}" class="spell-web" role="img" aria-label="Spell progression web">
-        <defs>
-          <linearGradient id="goldThread" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="#8b6427" />
-            <stop offset="45%" stop-color="#d4ab57" />
-            <stop offset="100%" stop-color="#f5dc9c" />
-          </linearGradient>
-          <filter id="threadGlow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="1.8" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-        <g class="web-links">${linkSvg}</g>
-        ${nodeSvg}
-      </svg>
-    </div>
-    <p class="web-note">Edit <code>spellWeb.links</code> for node strings/connections, <code>size</code> for orb importance, and <code>unlocked</code> for locked/available state.</p>
-  `;
+  const editClass = isEditMode ? "is-editing" : "";
+
+  return `<div class="tree-wrap ${editClass}"><svg id="abilityTreeSvg" viewBox="0 0 ${SVG_WIDTH} ${SVG_HEIGHT}" class="tree" aria-label="Ability tech tree for ${treeTemplates[activeTab].label}">
+    <defs>
+      <radialGradient id="orbUnlockedGradient" cx="35%" cy="30%" r="75%">
+        <stop offset="0%" stop-color="#5f739c" />
+        <stop offset="60%" stop-color="#344363" />
+        <stop offset="100%" stop-color="#202a42" />
+      </radialGradient>
+      <radialGradient id="orbLockedGradient" cx="35%" cy="30%" r="75%">
+        <stop offset="0%" stop-color="#656a77" />
+        <stop offset="60%" stop-color="#464c57" />
+        <stop offset="100%" stop-color="#353a44" />
+      </radialGradient>
+    </defs>
+    <g class="link-layer">${links}</g>${nodes}</svg></div>`;
 }
 
-function renderDetail(player) {
-  const statsMarkup = Object.entries(player.stats)
-    .map(([stat, value]) => `<li><strong>${stat}</strong>: ${value}</li>`)
-    .join("");
+function updateTreeSvgFromData() {
+  const tree = getActiveTree();
+  const svg = document.querySelector("#abilityTreeSvg");
+  if (!svg) return;
 
-  detailContent.innerHTML = `
-    <header class="detail-header">
-      <h2>${player.name}</h2>
-      <p>${player.classLevel} • ${player.race} • ${player.background}</p>
-    </header>
+  tree.nodes.forEach((node) => {
+    const core = svg.querySelector(`.node-core[data-node-id="${node.id}"]`);
+    if (core) core.setAttribute("transform", `translate(${node.x}, ${node.y})`);
 
-    <div class="detail-utilities">
-      <a class="utility-tab inventory-link" href="inventory.html?player=${player.index}">Open Inventory</a>
-      <a class="utility-tab inventory-link" href="spell.html?player=${player.index}">Open Spell Progression</a>
-    </div>
+    node.attachments.forEach((point, index) => {
+      const handle = svg.querySelector(`.attach-handle[data-node-id="${node.id}"][data-attachment-index="${index}"]`);
+      if (!handle) return;
+      handle.setAttribute("cx", String(node.x + point.dx));
+      handle.setAttribute("cy", String(node.y + point.dy));
+    });
+  });
 
-    <div class="detail-grid">
-      <section class="panel">
-        <h3>Core Stats</h3>
-        <ul class="stats-list">${statsMarkup}</ul>
-      </section>
+  tree.links.forEach((link, index) => {
+    const line = svg.querySelector(`line[data-link-index="${index}"]`);
+    const fromNode = findNode(tree, link.from);
+    const toNode = findNode(tree, link.to);
+    if (!line || !fromNode || !toNode) return;
 
-      <section class="panel">
-        <h3>What You Can Do</h3>
-        ${toList(player.canDo, "bullet-list")}
-      </section>
-
-
-      <section class="panel limits">
-        <h3>Limits / Reminders</h3>
-        ${toList(player.cantDo, "bullet-list")}
-
-        <label class="notes-label" for="limitNotes">Custom Notes</label>
-        <textarea id="limitNotes" class="notes-input" placeholder="Add your reminders here..."></textarea>
-      </section>
-    </div>
-
-  `;
-
-
-  const notesKey = `limits-notes-${player.index}`;
-  const notesInput = detailContent.querySelector("#limitNotes");
-  notesInput.value = localStorage.getItem(notesKey) ?? "";
-  notesInput.addEventListener("input", () => {
-    localStorage.setItem(notesKey, notesInput.value);
+    const fromPoint = attachmentPosition(fromNode, link.fromAttachment);
+    const toPoint = attachmentPosition(toNode, link.toAttachment);
+    line.setAttribute("x1", String(fromPoint.x));
+    line.setAttribute("y1", String(fromPoint.y));
+    line.setAttribute("x2", String(toPoint.x));
+    line.setAttribute("y2", String(toPoint.y));
   });
 }
 
+function getSvgCoordinates(svg, clientX, clientY) {
+  const point = svg.createSVGPoint();
+  point.x = clientX;
+  point.y = clientY;
+  return point.matrixTransform(svg.getScreenCTM().inverse());
+}
 
-function focusCard(index) {
-  if (transitioning || activeIndex === index) {
-    return;
-  }
+function bindTreeDragHandlers() {
+  const svg = document.querySelector("#abilityTreeSvg");
+  if (!svg) return;
 
-  transitioning = true;
-  activeIndex = index;
-  const cards = [...grid.querySelectorAll(".player-card")];
+  svg.addEventListener("pointerdown", (event) => {
+    if (!isEditMode) return;
 
-  cards.forEach((card) => {
-    const isSelected = Number(card.dataset.index) === index;
-    card.classList.toggle("selected", isSelected);
+    const nodeCore = event.target.closest(".node-core");
+    const attachment = event.target.closest(".attach-handle");
+    if (!nodeCore && !attachment) return;
 
-    if (!isSelected) {
-      card.classList.add("fade-away");
+    const tree = getActiveTree();
+    const coords = getSvgCoordinates(svg, event.clientX, event.clientY);
+
+    if (nodeCore) {
+      const nodeId = nodeCore.dataset.nodeId;
+      const node = findNode(tree, nodeId);
+      if (!node) return;
+      dragState = {
+        mode: "node",
+        node,
+        offsetX: coords.x - node.x,
+        offsetY: coords.y - node.y
+      };
+    }
+
+    if (attachment) {
+      const nodeId = attachment.dataset.nodeId;
+      const attachmentIndex = Number(attachment.dataset.attachmentIndex);
+      const node = findNode(tree, nodeId);
+      if (!node || Number.isNaN(attachmentIndex)) return;
+      dragState = {
+        mode: "attachment",
+        node,
+        attachmentIndex
+      };
+    }
+
+    if (dragState) {
+      event.preventDefault();
+      svg.setPointerCapture(event.pointerId);
     }
   });
 
-  window.setTimeout(() => {
-    cards.forEach((card) => {
-      if (Number(card.dataset.index) !== index) {
-        card.hidden = true;
-      }
-    });
+  svg.addEventListener("pointermove", (event) => {
+    if (!isEditMode) {
+      dragState = null;
+      return;
+    }
 
-    renderDetail(players[index]);
-    detailPanel.hidden = false;
-    detailPanel.scrollIntoView({ behavior: "smooth", block: "start" });
-    transitioning = false;
-  }, 260);
+    if (!dragState) return;
+    const coords = getSvgCoordinates(svg, event.clientX, event.clientY);
+
+    if (dragState.mode === "node") {
+      const tree = getActiveTree();
+      const bounded = clampNodePositionToBounds(dragState.node, coords.x - dragState.offsetX, coords.y - dragState.offsetY);
+      if (!overlapsAnyNode(tree, dragState.node, bounded.x, bounded.y)) {
+        dragState.node.x = bounded.x;
+        dragState.node.y = bounded.y;
+        updateTreeSvgFromData();
+      }
+    }
+
+    if (dragState.mode === "attachment") {
+      const point = dragState.node.attachments[dragState.attachmentIndex];
+      const clamped = clampAttachmentToOrb(dragState.node, coords.x - dragState.node.x, coords.y - dragState.node.y);
+      point.dx = clamped.dx;
+      point.dy = clamped.dy;
+      updateTreeSvgFromData();
+    }
+  });
+
+  function finishDrag() {
+    if (!dragState) return;
+    dragState = null;
+    saveState();
+  }
+
+  svg.addEventListener("pointerup", finishDrag);
+  svg.addEventListener("pointercancel", finishDrag);
+
+  svg.addEventListener("click", (event) => {
+    if (isEditMode) return;
+    const nodeCore = event.target.closest(".node-core");
+    if (!nodeCore) return;
+
+    const nodeId = nodeCore.dataset.nodeId;
+    if (!nodeId) return;
+    selectedInfoNodeId = nodeId;
+    renderSpellInfoCard();
+  });
+
+  svg.addEventListener("dblclick", async (event) => {
+    if (!isEditMode) return;
+
+    const nodeCore = event.target.closest(".node-core");
+    if (!nodeCore) return;
+
+    const nodeId = nodeCore.dataset.nodeId;
+    if (!nodeId) return;
+
+    const tree = getActiveTree();
+    if (!tree || tree.nodes.length <= 1) {
+      window.alert("You must keep at least one orb in this tab.");
+      return;
+    }
+
+    const node = findNode(tree, nodeId);
+    if (!node) return;
+
+    const ok = await requestPermanentConfirmation(`Delete orb \"${node.label}\"? This removes connected webs too.`);
+    if (!ok) return;
+
+    tree.nodes = tree.nodes.filter((entry) => entry.id !== nodeId);
+    tree.links = tree.links.filter((link) => link.from !== nodeId && link.to !== nodeId);
+    if (selectedInfoNodeId === nodeId) {
+      selectedInfoNodeId = null;
+    }
+
+    saveState();
+    renderAll();
+  });
 }
 
-function showAllCards() {
-  if (transitioning) {
+function renderSpellInfoCard() {
+  if (!spellInfoCard) return;
+
+  if (isEditMode || !selectedInfoNodeId) {
+    spellInfoCard.hidden = true;
+    spellInfoCard.innerHTML = "";
     return;
   }
 
-  transitioning = true;
-  detailPanel.hidden = true;
-  detailContent.innerHTML = "";
+  const node = findNode(getActiveTree(), selectedInfoNodeId);
+  if (!node) {
+    spellInfoCard.hidden = true;
+    spellInfoCard.innerHTML = "";
+    return;
+  }
 
-  const cards = [...grid.querySelectorAll(".player-card")];
-  cards.forEach((card) => {
-    card.hidden = false;
-    card.classList.remove("selected", "fade-away");
-    card.classList.add("fade-in");
-  });
+  const tagsMarkup = Array.isArray(node.tags) && node.tags.length > 0
+    ? node.tags.map((tag) => `<span class="ability-tag">${escapeHtml(tag)}</span>`).join("")
+    : '<span class="tag-empty">No tags</span>';
+  const spellDescription = node.spellDescription || "No spell description yet.";
 
-  window.setTimeout(() => {
-    cards.forEach((card) => card.classList.remove("fade-in"));
-    activeIndex = null;
-    transitioning = false;
-  }, 260);
+  spellInfoCard.innerHTML = `
+    <div class="spell-info-header">
+      <strong class="spell-info-name">${escapeHtml(node.label)}</strong>
+      <button type="button" class="spell-info-close" aria-label="Close spell details">×</button>
+    </div>
+    <div class="spell-info-meta">Tier ${node.tier + 1}</div>
+    <div class="spell-info-kind">${escapeHtml(node.abilityKind || "Spell")}</div>
+    <p class="spell-info-description">${escapeHtml(spellDescription)}</p>
+    <div class="spell-info-tags">
+      <span class="tag-values">${tagsMarkup}</span>
+    </div>
+  `;
+  spellInfoCard.hidden = false;
+
+  const closeButton = spellInfoCard.querySelector(".spell-info-close");
+  if (closeButton) {
+    closeButton.addEventListener("click", () => {
+      selectedInfoNodeId = null;
+      renderSpellInfoCard();
+    });
+  }
 }
 
-closeDetail.addEventListener("click", showAllCards);
+function normalizeActiveTab() {
+  if (treeTemplates[activeTab] && treesByTab[activeTab]) return;
+  const firstTab = Object.keys(treeTemplates)[0];
+  if (firstTab) {
+    activeTab = firstTab;
+    return;
+  }
 
-renderCards();
+  treeTemplates.tank = {
+    ...cloneTree(builtInTreeTemplates.tank),
+    label: builtInTreeTemplates.tank.label
+  };
+  treesByTab.tank = cloneTree(builtInTreeTemplates.tank);
+  normalizeTree(treesByTab.tank);
+  activeTab = "tank";
+}
+
+function renderTagPicker() {
+  const buttons = availableTags
+    .map((tag) => {
+      const activeClass = selectedFormTags.has(tag) ? "is-selected" : "";
+      const pressed = selectedFormTags.has(tag) ? "true" : "false";
+      return `<button type="button" class="tag-toggle ${activeClass}" data-tag="${tag}" aria-pressed="${pressed}">${tag}</button>`;
+    })
+    .join("");
+
+  tagPicker.innerHTML = `${buttons}<button type="button" class="tag-toggle add-tag-btn" data-action="add-tag" aria-label="Add new tag">+</button>`;
+}
+
+function addTagOption() {
+  const raw = window.prompt("New tag name");
+  if (raw === null) return;
+
+  const normalized = String(raw).trim();
+  if (!normalized) return;
+
+  const exists = availableTags.some((tag) => tag.toLowerCase() === normalized.toLowerCase());
+  if (!exists) {
+    availableTags.push(normalized);
+  }
+
+  selectedFormTags.add(availableTags.find((tag) => tag.toLowerCase() === normalized.toLowerCase()) ?? normalized);
+  saveState();
+  renderTagPicker();
+}
+
+function renderPrereqOptions() {
+  const selectedValues = Array.from(prereqSelect.selectedOptions ?? []).map((option) => option.value);
+  const options = [];
+  getActiveTree().nodes.forEach((node) => {
+    options.push(`<option value="${node.id}">${node.label}</option>`);
+  });
+  prereqSelect.innerHTML = options.join("");
+
+  selectedValues.forEach((value) => {
+    const option = prereqSelect.querySelector(`option[value="${value}"]`);
+    if (option) option.selected = true;
+  });
+}
+
+function createNewTab() {
+  const rawLabel = window.prompt("Name your new tab (example: Summoner)");
+  if (rawLabel === null) return;
+
+  const label = rawLabel.trim();
+  if (!label) return;
+
+  const baseKey = toSlug(label);
+  let key = baseKey;
+  let counter = 2;
+  while (treeTemplates[key]) {
+    key = `${baseKey}-${counter}`;
+    counter += 1;
+  }
+
+  const template = {
+    label,
+    nodes: [
+      {
+        id: "core-ability",
+        label: "Core Ability",
+        tier: 0,
+        size: 22,
+        unlocked: true,
+        x: 390,
+        y: 156,
+        attachments: defaultAttachments(22),
+        tags: []
+      }
+    ],
+    links: []
+  };
+
+  treeTemplates[key] = cloneTree(template);
+  treesByTab[key] = cloneTree(template);
+  activeTab = key;
+  saveState();
+  renderAll();
+}
+
+function renderTabs() {
+  const roleButtons = Object.entries(treeTemplates)
+    .map(([key, template]) => {
+      const activeClass = key === activeTab ? "is-active" : "";
+      const selected = key === activeTab ? "true" : "false";
+      const editControls = isTabEditMode
+        ? `<div class="tab-edit-actions">
+            <button type="button" class="tab-mini-btn" data-rename-tab="${key}">Rename</button>
+            <button type="button" class="tab-mini-btn danger" data-delete-tab="${key}">Delete</button>
+          </div>`
+        : "";
+
+      return `<div class="tab-item">
+        <button type="button" role="tab" class="tab-btn ${activeClass}" aria-selected="${selected}" data-tab="${key}">${template.label}</button>
+        ${editControls}
+      </div>`;
+    })
+    .join("");
+
+  tabBar.innerHTML = `${roleButtons}<button type="button" class="tab-btn add-tab-btn" aria-label="Add tab">+</button>`;
+
+  tabBar.querySelectorAll(".tab-btn[data-tab]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const nextTab = button.dataset.tab;
+      if (!nextTab || nextTab === activeTab) return;
+      activeTab = nextTab;
+      saveState();
+      renderAll();
+    });
+  });
+
+  const addTabButton = tabBar.querySelector(".add-tab-btn");
+  if (addTabButton) {
+    addTabButton.addEventListener("click", createNewTab);
+  }
+
+  tabBar.querySelectorAll(".tab-mini-btn[data-rename-tab]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const tabKey = button.dataset.renameTab;
+      if (!tabKey || !treeTemplates[tabKey]) return;
+
+      const nextLabel = window.prompt("Rename tab:", treeTemplates[tabKey].label);
+      if (nextLabel === null) return;
+
+      const trimmed = nextLabel.trim();
+      if (!trimmed) return;
+      treeTemplates[tabKey].label = trimmed;
+      saveState();
+      renderAll();
+    });
+  });
+
+  tabBar.querySelectorAll(".tab-mini-btn[data-delete-tab]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const tabKey = button.dataset.deleteTab;
+      if (!tabKey || !treeTemplates[tabKey]) return;
+      if (Object.keys(treeTemplates).length <= 1) return;
+
+      const ok = await requestPermanentConfirmation(`Delete tab "${treeTemplates[tabKey].label}"?`);
+      if (!ok) return;
+
+      delete treeTemplates[tabKey];
+      delete treesByTab[tabKey];
+      if (activeTab === tabKey) {
+        activeTab = Object.keys(treeTemplates)[0] ?? "tank";
+      }
+      saveState();
+      renderAll();
+    });
+  });
+}
+
+function suggestNodePosition(tree, tier) {
+  const nodesInTier = tree.nodes.filter((node) => node.tier === tier).length;
+  const rough = {
+    x: Math.max(90, Math.min(810, 140 + nodesInTier * 120)),
+    y: 52 + tier * 84
+  };
+
+  const probeNode = { id: "__probe__", size: 22 };
+  return findNonOverlappingPosition(tree, probeNode, rough.x, rough.y);
+}
+
+function renderAll() {
+  normalizeActiveTab();
+  const tabLabel = treeTemplates[activeTab].label;
+  treeTitle.textContent = `${tabLabel} Spells & Abilities`;
+  treeCanvas.innerHTML = createTreeMarkup(getActiveTree());
+  renderPrereqOptions();
+  renderTabs();
+  renderTagPicker();
+  renderFilterPanel();
+  bindTreeDragHandlers();
+  renderSpellInfoCard();
+}
+
+function renderEditButton() {
+  if (!editWebButton) return;
+  editWebButton.textContent = isEditMode ? "Done" : "Edit";
+  editWebButton.setAttribute("aria-pressed", isEditMode ? "true" : "false");
+  editWebButton.classList.toggle("is-active", isEditMode);
+}
+
+function renderEditTabsButton() {
+  if (!editTabsButton) return;
+  editTabsButton.textContent = isTabEditMode ? "Done" : "Edit";
+  editTabsButton.setAttribute("aria-pressed", isTabEditMode ? "true" : "false");
+  editTabsButton.classList.toggle("is-active", isTabEditMode);
+}
+
+function requestPermanentConfirmation(message = "") {
+  if (!confirmOverlay || !confirmYesButton || !confirmNoButton) return Promise.resolve(true);
+
+  if (confirmMessage) {
+    confirmMessage.textContent = String(message);
+  }
+
+  confirmOverlay.hidden = false;
+  confirmYesButton.focus();
+
+  return new Promise((resolve) => {
+    const onYes = () => {
+      cleanup();
+      resolve(true);
+    };
+    const onNo = () => {
+      cleanup();
+      resolve(false);
+    };
+    const onOverlay = (event) => {
+      if (event.target === confirmOverlay) onNo();
+    };
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") onNo();
+    };
+
+    function cleanup() {
+      confirmOverlay.hidden = true;
+      confirmYesButton.removeEventListener("click", onYes);
+      confirmNoButton.removeEventListener("click", onNo);
+      confirmOverlay.removeEventListener("click", onOverlay);
+      document.removeEventListener("keydown", onKeyDown);
+    }
+
+    confirmYesButton.addEventListener("click", onYes);
+    confirmNoButton.addEventListener("click", onNo);
+    confirmOverlay.addEventListener("click", onOverlay);
+    document.addEventListener("keydown", onKeyDown);
+  });
+}
+
+abilityForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+
+  const formData = new FormData(abilityForm);
+  const label = String(formData.get("abilityName") ?? "").trim().slice(0, ABILITY_NAME_MAX_LENGTH);
+  const tier = Number(formData.get("abilityTier") ?? 0);
+  const importance = String(formData.get("abilityImportance") ?? "base");
+  const abilityKindRaw = String(formData.get("abilityKind") ?? "Spell").trim();
+  const abilityKind = abilityKindRaw || "Spell";
+  const spellDescription = String(formData.get("abilitySpellDescription") ?? "").trim();
+  const prereqs = Array.from(prereqSelect.selectedOptions ?? [])
+    .map((option) => option.value)
+    .filter(Boolean);
+  const tags = [...selectedFormTags];
+  const status = String(formData.get("abilityStatus") ?? "unlocked");
+  const abilityType = String(formData.get("abilityType") ?? "Conventional");
+
+  if (!label) return;
+  if (prereqs.length < 1) {
+    window.alert("Choose at least 1 prerequisite.");
+    return;
+  }
+
+  const activeTree = getActiveTree();
+  const baseId = toSlug(label);
+  let id = baseId;
+  let n = 2;
+  while (activeTree.nodes.some((node) => node.id === id)) {
+    id = `${baseId}-${n}`;
+    n += 1;
+  }
+
+  const boundedTier = Number.isNaN(tier) ? 0 : Math.max(0, Math.min(4, tier));
+  const boundedImportance = importanceToSize[importance] ? importance : "base";
+  const boundedSize = sizeFromImportance(boundedImportance);
+  const unlocked = boundedTier === 0 ? true : status === "unlocked";
+  const roughPosition = suggestNodePosition(activeTree, boundedTier);
+  const previewNode = { id, size: boundedSize };
+  const position = findNonOverlappingPosition(activeTree, previewNode, roughPosition.x, roughPosition.y);
+
+  activeTree.nodes.push({
+    id,
+    label,
+    tier: boundedTier,
+    size: boundedSize,
+    importance: boundedImportance,
+    abilityKind,
+    spellDescription,
+    abilityType,
+    unlocked,
+    x: position.x,
+    y: position.y,
+    attachments: defaultAttachments(boundedSize),
+    tags
+  });
+
+  prereqs.forEach((prereq) => {
+    activeTree.links.push({ from: prereq, to: id });
+  });
+
+  saveState();
+  abilityForm.reset();
+  document.querySelector("#abilityImportance").value = "base";
+  document.querySelector("#abilityKind").value = "Spell";
+  document.querySelector("#abilitySpellDescription").value = "";
+  document.querySelector("#abilityStatus").value = "unlocked";
+  document.querySelector("#abilityType").value = "Conventional";
+  selectedFormTags = new Set();
+  renderAll();
+});
+
+tagPicker.addEventListener("click", (event) => {
+  const addButton = event.target.closest(".add-tag-btn");
+  if (addButton) {
+    addTagOption();
+    return;
+  }
+
+  const button = event.target.closest(".tag-toggle");
+  if (!button) return;
+
+  const tag = button.dataset.tag;
+  if (!tag) return;
+
+  if (selectedFormTags.has(tag)) {
+    selectedFormTags.delete(tag);
+  } else {
+    selectedFormTags.add(tag);
+  }
+
+  renderTagPicker();
+});
+
+clearTagsButton.addEventListener("click", () => {
+  selectedFormTags = new Set();
+  renderTagPicker();
+});
+
+
+resetTreeButton.addEventListener("click", async () => {
+  const ok = await requestPermanentConfirmation(`Reset "${treeTemplates[activeTab].label}" back to template values?`);
+  if (!ok) return;
+  treesByTab[activeTab] = cloneTree(treeTemplates[activeTab]);
+  saveState();
+  renderAll();
+});
+
+renderAll();
+renderEditButton();
+renderEditTabsButton();
+
+if (abilityNameInput) {
+  abilityNameInput.maxLength = ABILITY_NAME_MAX_LENGTH;
+}
+
+if (editWebButton) {
+  editWebButton.addEventListener("click", () => {
+    isEditMode = !isEditMode;
+    if (!isEditMode) {
+      dragState = null;
+    }
+    if (isEditMode) {
+      selectedInfoNodeId = null;
+    }
+    renderEditButton();
+    renderAll();
+  });
+}
+
+if (filterWebButton) {
+  filterWebButton.addEventListener("click", () => {
+    isFilterPanelOpen = !isFilterPanelOpen;
+    renderFilterPanel();
+  });
+}
+
+if (filterModeSelect) {
+  filterModeSelect.addEventListener("change", () => {
+    activeFilterMode = filterModeSelect.value;
+    activeFilterValue = "";
+    renderAll();
+  });
+}
+
+if (filterValueSelect) {
+  filterValueSelect.addEventListener("change", () => {
+    activeFilterValue = filterValueSelect.value;
+    renderAll();
+  });
+}
+
+if (clearFilterButton) {
+  clearFilterButton.addEventListener("click", () => {
+    activeFilterMode = "none";
+    activeFilterValue = "";
+    renderAll();
+  });
+}
+
+if (editTabsButton) {
+  editTabsButton.addEventListener("click", () => {
+    isTabEditMode = !isTabEditMode;
+    renderEditTabsButton();
+    renderAll();
+  });
+}
