@@ -94,6 +94,7 @@ const confirmYesButton = document.querySelector("#confirmYes");
 const confirmNoButton = document.querySelector("#confirmNo");
 const confirmMessage = document.querySelector("#confirmMessage");
 const spellInfoCard = document.querySelector("#spellInfoCard");
+const doubleClickTooltip = document.querySelector("#doubleClickTooltip");
 const abilityNameInput = document.querySelector("#abilityName");
 
 let selectedFormTags = new Set();
@@ -104,6 +105,7 @@ let selectedInfoNodeId = null;
 let isFilterPanelOpen = false;
 let activeFilterMode = "none";
 let activeFilterValue = "";
+let isDoubleClick = false;
 
 const importanceToSize = {
   minor: 18,
@@ -475,12 +477,17 @@ function createTreeMarkup(tree) {
       const handles = node.attachments
         .map((point, index) => `<circle class="attach-handle" data-node-id="${node.id}" data-attachment-index="${index}" cx="${node.x + point.dx}" cy="${node.y + point.dy}" r="${handleRadius}"></circle>`)
         .join("");
+      
+      const deleteButton = isEditMode 
+        ? `<button class="delete-orb-btn" data-node-id="${node.id}" aria-label="Delete ${escapeHtml(node.label)}">×</button>`
+        : "";
 
       return `
       <g class="node-layer" data-node-id="${node.id}">
         <g class="node-core ${stateClass} ${typeClass} ${filterClass}" data-node-id="${node.id}" transform="translate(${node.x}, ${node.y})">
           <circle r="${node.size ?? 22}"></circle>
-          <text y="4" text-anchor="middle">${node.label}</text>
+          <text y="4" text-anchor="middle">${escapeHtml(node.label)}</text>
+          ${deleteButton}
         </g>
         <g class="attachment-layer">${handles}</g>
       </g>`;
@@ -544,12 +551,33 @@ function getSvgCoordinates(svg, clientX, clientY) {
   return point.matrixTransform(svg.getScreenCTM().inverse());
 }
 
+function deleteNode(nodeId) {
+  const tree = getActiveTree();
+  const node = findNode(tree, nodeId);
+  if (!node) return;
+
+  // Remove all links to and from this node
+  tree.links = tree.links.filter(link => link.from !== nodeId && link.to !== nodeId);
+
+  // Remove the node
+  const nodeIndex = tree.nodes.findIndex(n => n.id === nodeId);
+  if (nodeIndex !== -1) {
+    tree.nodes.splice(nodeIndex, 1);
+  }
+
+  saveState();
+  renderAll();
+}
+
 function bindTreeDragHandlers() {
   const svg = document.querySelector("#abilityTreeSvg");
   if (!svg) return;
 
   svg.addEventListener("pointerdown", (event) => {
     if (!isEditMode) return;
+    
+    // Don't start drag if this is a double-click
+    if (isDoubleClick) return;
 
     const nodeCore = event.target.closest(".node-core");
     const attachment = event.target.closest(".attach-handle");
@@ -589,11 +617,6 @@ function bindTreeDragHandlers() {
   });
 
   svg.addEventListener("pointermove", (event) => {
-    if (!isEditMode) {
-      dragState = null;
-      return;
-    }
-
     if (!dragState) return;
     const coords = getSvgCoordinates(svg, event.clientX, event.clientY);
 
@@ -626,7 +649,28 @@ function bindTreeDragHandlers() {
   svg.addEventListener("pointercancel", finishDrag);
 
   svg.addEventListener("click", (event) => {
-    if (isEditMode) return;
+    if (isEditMode) {
+      const deleteButton = event.target.closest(".delete-orb-btn");
+      if (deleteButton) {
+        event.preventDefault();
+        event.stopPropagation();
+        const nodeId = deleteButton.dataset.nodeId;
+        if (nodeId) {
+          const tree = getActiveTree();
+          const node = findNode(tree, nodeId);
+          if (node) {
+            const label = node.label || 'unnamed orb';
+            requestPermanentConfirmation(`Delete "${label}"? This will remove the orb and all its connections.`).then(ok => {
+              if (ok) {
+                deleteNode(nodeId);
+              }
+            });
+          }
+        }
+        return;
+      }
+    }
+    
     const nodeCore = event.target.closest(".node-core");
     if (!nodeCore) return;
 
@@ -636,35 +680,57 @@ function bindTreeDragHandlers() {
     renderSpellInfoCard();
   });
 
-  svg.addEventListener("dblclick", async (event) => {
+  svg.addEventListener("dblclick", (event) => {
     if (!isEditMode) return;
-
+    
     const nodeCore = event.target.closest(".node-core");
     if (!nodeCore) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Set flag to prevent drag
+    isDoubleClick = true;
+    setTimeout(() => {
+      isDoubleClick = false;
+    }, 300);
 
     const nodeId = nodeCore.dataset.nodeId;
     if (!nodeId) return;
 
     const tree = getActiveTree();
-    if (!tree || tree.nodes.length <= 1) {
-      window.alert("You must keep at least one orb in this tab.");
-      return;
-    }
-
     const node = findNode(tree, nodeId);
     if (!node) return;
 
-    const ok = await requestPermanentConfirmation(`Delete orb \"${node.label}\"? This removes connected webs too.`);
-    if (!ok) return;
+    const label = node.label || 'unnamed orb';
+    requestPermanentConfirmation(`Delete "${label}"? This will remove orb and all its connections.`).then(ok => {
+      if (ok) {
+        deleteNode(nodeId);
+      }
+    });
+  });
 
-    tree.nodes = tree.nodes.filter((entry) => entry.id !== nodeId);
-    tree.links = tree.links.filter((link) => link.from !== nodeId && link.to !== nodeId);
-    if (selectedInfoNodeId === nodeId) {
-      selectedInfoNodeId = null;
+  // Add hover functionality for tooltip in edit mode
+  svg.addEventListener("mouseover", (event) => {
+    if (!isEditMode) return;
+    
+    const nodeCore = event.target.closest(".node-core");
+    if (!nodeCore) return;
+
+    if (doubleClickTooltip) {
+      doubleClickTooltip.hidden = false;
     }
+  });
 
-    saveState();
-    renderAll();
+  svg.addEventListener("mouseout", (event) => {
+    if (!isEditMode) return;
+    
+    const nodeCore = event.target.closest(".node-core");
+    if (!nodeCore) return;
+
+    if (doubleClickTooltip) {
+      doubleClickTooltip.hidden = true;
+    }
   });
 }
 
@@ -688,6 +754,7 @@ function renderSpellInfoCard() {
     ? node.tags.map((tag) => `<span class="ability-tag">${escapeHtml(tag)}</span>`).join("")
     : '<span class="tag-empty">No tags</span>';
   const spellDescription = node.spellDescription || "No spell description yet.";
+  const damageDice = node.damageDice || "";
 
   spellInfoCard.innerHTML = `
     <div class="spell-info-header">
@@ -696,6 +763,7 @@ function renderSpellInfoCard() {
     </div>
     <div class="spell-info-meta">Tier ${node.tier + 1}</div>
     <div class="spell-info-kind">${escapeHtml(node.abilityKind || "Spell")}</div>
+    ${damageDice ? `<div class="spell-info-damage">Damage: ${escapeHtml(damageDice)}</div>` : ""}
     <p class="spell-info-description">${escapeHtml(spellDescription)}</p>
     <div class="spell-info-tags">
       <span class="tag-values">${tagsMarkup}</span>
@@ -973,6 +1041,7 @@ abilityForm.addEventListener("submit", (event) => {
   const abilityKindRaw = String(formData.get("abilityKind") ?? "Spell").trim();
   const abilityKind = abilityKindRaw || "Spell";
   const spellDescription = String(formData.get("abilitySpellDescription") ?? "").trim();
+  const damageDice = String(formData.get("abilityDamageDice") ?? "").trim();
   const prereqs = Array.from(prereqSelect.selectedOptions ?? [])
     .map((option) => option.value)
     .filter(Boolean);
@@ -1011,6 +1080,7 @@ abilityForm.addEventListener("submit", (event) => {
     importance: boundedImportance,
     abilityKind,
     spellDescription,
+    damageDice,
     abilityType,
     unlocked,
     x: position.x,
@@ -1073,6 +1143,7 @@ resetTreeButton.addEventListener("click", async () => {
 renderAll();
 renderEditButton();
 renderEditTabsButton();
+renderFilterPanel();
 
 if (abilityNameInput) {
   abilityNameInput.maxLength = ABILITY_NAME_MAX_LENGTH;
@@ -1081,9 +1152,6 @@ if (abilityNameInput) {
 if (editWebButton) {
   editWebButton.addEventListener("click", () => {
     isEditMode = !isEditMode;
-    if (!isEditMode) {
-      dragState = null;
-    }
     if (isEditMode) {
       selectedInfoNodeId = null;
     }

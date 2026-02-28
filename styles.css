@@ -150,6 +150,10 @@ body {
   padding: 1rem;
 }
 
+[hidden] {
+  display: none;
+}
+
 .confirm-overlay[hidden] {
   display: none;
 }
@@ -248,6 +252,12 @@ body {
   gap: 0.75rem;
 }
 
+.form-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 0.75rem;
+}
+
 .ability-form label {
   display: grid;
   gap: 0.35rem;
@@ -272,8 +282,9 @@ button {
 }
 
 .ability-form select[multiple] {
-  min-height: 142px;
-  padding: 0.4rem;
+  min-height: 42px;
+  padding: 0.5rem 0.55rem;
+  border-radius: 8px;
 }
 
 .ability-form textarea {
@@ -518,6 +529,70 @@ button.ghost {
 
 .tree-wrap.is-editing .attach-handle:active {
   cursor: grabbing;
+}
+
+.delete-orb-btn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid rgba(220, 86, 86, 0.8);
+  background: rgba(220, 86, 86, 0.9);
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  transition: all 0.2s ease;
+}
+
+.tree-wrap.is-editing .delete-orb-btn {
+  display: flex;
+}
+
+.delete-orb-btn:hover {
+  background: rgba(255, 100, 100, 0.95);
+  border-color: rgba(255, 100, 100, 1);
+  transform: scale(1.1);
+}
+
+.delete-orb-btn:active {
+  transform: scale(0.95);
+}
+
+.double-click-tooltip {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(220, 86, 86, 0.9);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  white-space: nowrap;
+}
+
+.double-click-tooltip:not([hidden]) {
+  opacity: 1;
+}
+
+.spell-info-damage {
+  color: var(--accent);
+  font-weight: 600;
+  margin: 0.25rem 0;
 }
 
 .tag-values {
